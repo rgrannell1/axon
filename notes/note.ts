@@ -1,6 +1,22 @@
 import { join } from "https://deno.land/std@0.127.0/path/mod.ts";
 import { AxonParser } from "../axon-lang/parser.ts";
 
+export class NoteContext {
+  substitutions: Record<string, string>
+  constructor (substitutions: Record<string, string>) {
+    this.substitutions = substitutions;
+  }
+  replace(name: string): string {
+    for (const [candidate, replacement] of Object.entries(this.substitutions)) {
+      if (name === candidate) {
+        return replacement;
+      }
+    }
+
+    return name
+  }
+}
+
 export class Note {
   name: string;
   dpath: string;
@@ -18,7 +34,10 @@ export class Note {
 
   async parse() {
     const content = await this.read();
+    const ctx = new NoteContext({
+      $filename: this.fpath
+    });
 
-    return AxonParser.parse(content);
+    return AxonParser.parse(ctx, content);
   }
 }
