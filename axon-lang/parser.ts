@@ -2,10 +2,12 @@ import "https://unpkg.com/parsimmon@1.18.1/build/parsimmon.umd.min.js";
 import { NoteContext } from "../notes/note.ts";
 
 const P = (window as any).Parsimmon;
-const AxonLanguage = (ctx: NoteContext) => {
+export const AxonLanguage = (ctx: NoteContext) => {
   const Atoms = {
     String(): any {
-      return P.regexp(/\"[^"]+\"/).desc("string");
+      return P.regexp(/[^"]+/)
+      .wrap(P.string('"'), P.string('"'))
+      .desc("string");
     },
     Symbol(): any {
       return P.regexp(/[a-zA-Z0-9\$][a-zA-Z0-9\-_\/]*/).desc("symbol");
@@ -29,7 +31,9 @@ const AxonLanguage = (ctx: NoteContext) => {
       ).desc("Type");
     },
     TypeDeclaration(rules: any): any {
-      return P.alt(rules.Type, rules.Typelist).desc("TypeDeclaration");
+      return P.alt(rules.Type, rules.Typelist).desc("TypeDeclaration").map((types: any) => {
+        return Array.isArray(types) ? types : [types]
+      });
     },
   };
 
@@ -55,7 +59,8 @@ const AxonLanguage = (ctx: NoteContext) => {
         rules.EntityName.trim(P.optWhitespace),
         rules.TypeDeclaration.trim(P.optWhitespace),
       ).trim(P.optWhitespace)
-        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN)).desc("InnerPair");
+        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN))
+          .desc("InnerPair")
 
       return P.seq(
         P.alt(
@@ -63,15 +68,23 @@ const AxonLanguage = (ctx: NoteContext) => {
           pair,
         ),
       ).trim(P.optWhitespace)
-        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN)).desc("RelationshipEntityPairs");
+        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN))
+          .desc("RelationshipEntityPairs")
+          .map((x: any) => {
+            console.log(x)
+            throw 'x'
+          })
     },
     TwoPartRelationship(rules: any): any {
       return P.seq(
         rules.RelationshipName.trim(P.optWhitespace),
         rules.EntityName.trim(P.optWhitespace),
       ).trim(P.optWhitespace)
-        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN)).desc("TwoPartRelationship").map((entity: string[]) => {
-          return [entity[0], entity[1], 'Entity'];
+        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN)).desc("TwoPartRelationship").map((rel: string[]) => {
+          return [
+            ['is', rel[1], 'Entity'],
+            [rel[0], rel[1], 'Entity']
+          ]
         });
     },
 
@@ -79,9 +92,13 @@ const AxonLanguage = (ctx: NoteContext) => {
       return P.seq(
         rules.RelationshipName,
         rules.EntityName,
-        rules.Type,
+        rules.TypeDeclaration,
       ).trim(P.optWhitespace)
-        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN)).desc("ThreePartRelationship");
+        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN))
+        .desc("ThreePartRelationship")
+        .map((rel: string[]) => {
+          return
+        })
     },
 
     NestedNameRelationship(rules: any): any {
@@ -105,7 +122,10 @@ const AxonLanguage = (ctx: NoteContext) => {
     OnePartEntity(rules: any): any {
       return rules.EntityName
         .trim(P.optWhitespace)
-        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN)).desc("OnePartEntity");
+        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN))
+        .desc("OnePartEntity").map((entity: any) => {
+          return [['is', entity[0], 'Entity']]
+        });
     },
     TwoPartEntity(rules: any): any {
       return P.seq(
@@ -113,7 +133,9 @@ const AxonLanguage = (ctx: NoteContext) => {
         rules.TypeDeclaration.trim(P.optWhitespace),
       )
         .trim(P.optWhitespace)
-        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN)).desc("TwoPartEntity");
+        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN)).desc("TwoPartEntity").map((entity: any[]) => {
+          return entity[1].map((subtype: string) => ['is', entity[0], subtype])
+        });
     },
     FullEntity(rules: any): any {
       return P.seq(
@@ -121,7 +143,14 @@ const AxonLanguage = (ctx: NoteContext) => {
         rules.TypeDeclaration.trim(P.optWhitespace),
         rules.Relationship.trim(P.optWhitespace).many(),
       )
-        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN)).desc("FullEntity");
+        .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN))
+        .desc("FullEntity")
+        .map((entity: any) => {
+          const relationships = entity.slice(2).map((relationship: any[]) => {
+            return [relationship[0], entity[0], relationship[1]]
+          })
+          return entity[1].map((subtype: string) => ['is', entity[0], subtype]).concat(...relationships)
+        });
     },
     Entity(rules: any): any {
       return P.alt(
@@ -140,7 +169,9 @@ const AxonLanguage = (ctx: NoteContext) => {
     ...Entities,
 
     Program(rules: any): any {
-      return rules.Entity.trim(P.optWhitespace).many().desc("Program");
+      return rules.Entity.trim(P.optWhitespace).many().desc("Program").map((entities: any) => {
+        return [].concat(...entities)
+      });
     },
   });
 }
@@ -187,7 +218,6 @@ const test = `
 
 export class AxonParser {
   static parse(context: NoteContext, content: string) {
-    const ast = AxonLanguage(context).Program.tryParse(test);
-    console.log(ast)
+    return AxonLanguage(context).Program.tryParse(test);
   }
 }

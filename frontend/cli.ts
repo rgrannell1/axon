@@ -31,7 +31,8 @@ export class CLI {
     const vault = new Vault(args.dpath);
 
     for await (const note of vault.listNotes()) {
-      console.log(await note.parse());
+      const res = JSON.stringify(await note.parse(), null, 2);
+      console.log(res)
     }
   }
 }
