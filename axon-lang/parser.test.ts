@@ -98,15 +98,145 @@ Deno.test("EntityName", () => {
   }
 });
 
-Deno.test("RelationshipEntityPairs", () => {
-  const pairs: any[] = [
-    ['((foo (bar baz)))', ['foo', ['bar', 'baz']]],
-    ['((foo bar))', ['foo', ['bar']]],
+Deno.test("TwoPartRelationship", () => {
+  const pairs = [
+    ['(foo BAR)', [
+      ['is', 'BAR', 'Entity'],
+      ['foo', 'BAR', 'Entity']]
+    ],
+    ['(foo "bar")', [
+      ['is', 'bar', 'Entity'],
+      ['foo', 'bar', 'Entity']]
+    ]
   ]
 
   for (const [tcase, result] of pairs) {
-    const ast = Lang.RelationshipEntityPairs.tryParse(tcase)
-    console.log(ast)
-    throw 'xx'
+    const ast = Lang.TwoPartRelationship.tryParse(tcase)
+    assert(Array.isArray(ast))
+    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
+    assert(Array.isArray(ast[0]))
+
+    for (let idx = 0; idx < result[0].length; idx++) {
+      assertEquals(result[0][idx], ast[0][idx])
+    }
   }
-})
+});
+
+Deno.test("TwoPartRelationship", () => {
+  const pairs = [
+    ['(foo BAR)', [
+      ['is', 'BAR', 'Entity'],
+      ['foo', 'BAR']]
+    ],
+    ['(foo "bar")', [
+      ['is', 'bar', 'Entity'],
+      ['foo', 'bar']]
+    ]
+  ]
+
+  for (const [tcase, result] of pairs) {
+    const ast = Lang.TwoPartRelationship.tryParse(tcase)
+    assert(Array.isArray(ast))
+    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
+    assert(Array.isArray(ast[0]))
+
+    for (let idx = 0; idx < result[0].length; idx++) {
+      assertEquals(result[0][idx], ast[0][idx])
+    }
+  }
+});
+
+Deno.test("ThreePartRelationship", () => {
+  const pairs = [
+    ['(foo BAR baz)', [
+      ['is', 'BAR', 'baz'],
+      ['foo', 'BAR']]
+    ],
+    ['(foo BAR (baz bing))', [
+      ['is', 'BAR', 'baz'],
+      ['is', 'BAR', 'bing'],
+      ['foo', 'BAR']]
+    ]
+  ]
+
+  for (const [tcase, result] of pairs) {
+    const ast = Lang.ThreePartRelationship.tryParse(tcase)
+    assert(Array.isArray(ast))
+    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
+    assert(Array.isArray(ast[0]))
+
+    for (let idx = 0; idx < result[0].length; idx++) {
+      assertEquals(result[0][idx], ast[0][idx])
+    }
+  }
+});
+
+Deno.test("OnePartEntity", () => {
+  const pairs = [
+    ['(foo)', [
+      ['is', 'foo', 'Entity']
+    ]]
+  ]
+
+  for (const [tcase, result] of pairs) {
+    const ast = Lang.OnePartEntity.tryParse(tcase)
+    assert(Array.isArray(ast))
+    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
+    assert(Array.isArray(ast[0]))
+
+    for (let idx = 0; idx < result[0].length; idx++) {
+      assertEquals(result[0][idx], ast[0][idx])
+    }
+  }
+});
+
+Deno.test("TwoPartEntity", () => {
+  const pairs = [
+    ['(foo bar)', [
+      ['is', 'foo', 'bar']
+    ]],
+    ['(foo (bar baz))', [
+      ['is', 'foo', 'bar'],
+      ['is', 'foo', 'baz']
+    ]]
+  ]
+
+  for (const [tcase, result] of pairs) {
+    const ast = Lang.TwoPartEntity.tryParse(tcase)
+    assert(Array.isArray(ast))
+    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
+    assert(Array.isArray(ast[0]))
+
+    for (let idx = 0; idx < result[0].length; idx++) {
+      assertEquals(result[0][idx], ast[0][idx])
+    }
+  }
+});
+
+
+Deno.test("FullEntity", () => {
+  const src0 = `(foo bar
+  (has "bing" baz)
+  (has bong))`
+
+  const pairs = [
+    [src0, [
+      ['is', 'foo', 'bar'],
+      ['is', 'bing', 'baz'],
+      ['has', 'bar', 'bing'],
+      ['is', 'bong', 'Entity'],
+      ['has', 'bar', 'bong']
+    ]]
+  ]
+
+  for (const [tcase, result] of pairs) {
+    const ast = Lang.FullEntity.tryParse(tcase)
+    assert(Array.isArray(ast))
+    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
+    assert(Array.isArray(ast[0]))
+
+    for (let idx = 0; idx < result[0].length; idx++) {
+      assertEquals(result[0][idx], ast[0][idx])
+    }
+  }
+});
