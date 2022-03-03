@@ -32,7 +32,7 @@ export class CLI {
 
     for await (const note of vault.listNotes()) {
       const res = JSON.stringify(await note.parse(), null, 2);
-      console.log(res)
+      console.log(res);
     }
   }
 }

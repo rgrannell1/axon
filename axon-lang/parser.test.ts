@@ -1,11 +1,20 @@
-
-import { assertEquals, assert } from "https://deno.land/std@0.127.0/testing/asserts.ts";
-import {AxonLanguage} from './parser.ts'
+import {
+  assert,
+  assertEquals,
+} from "https://deno.land/std@0.127.0/testing/asserts.ts";
+import { AxonLanguage } from "./parser.ts";
 import { NoteContext } from "../notes/note.ts";
+import { Triple } from "./model.ts";
 
-const Lang = AxonLanguage(new NoteContext({
-  $filename: 'test-file'
-}))
+const Lang = AxonLanguage(
+  new NoteContext({
+    $filename: "test-file",
+  }),
+);
+
+const astMessage = (got: any, expected: any): string => {
+  return `got ${JSON.stringify(got)} expected ${JSON.stringify(expected)}`;
+};
 
 // Compact form: name and function
 Deno.test("String", () => {
@@ -16,232 +25,193 @@ Deno.test("String", () => {
 Deno.test("Symbol", () => {
   const pairs = [
     ["$filename", "$filename"],
-    ["foo/bar", "foo/bar"]
-  ]
+    ["foo/bar", "foo/bar"],
+  ];
 
   for (const [tcase, result] of pairs) {
-    assertEquals(Lang.Symbol.tryParse(tcase), result)
+    assertEquals(Lang.Symbol.tryParse(tcase), result);
   }
 });
 
 Deno.test("Type", () => {
   const pairs = [
     ['"$filename"', "$filename"],
-    ["foo/bar", "foo/bar"]
-  ]
+    ["foo/bar", "foo/bar"],
+  ];
 
   for (const [tcase, result] of pairs) {
-    assertEquals(Lang.Type.tryParse(tcase), result)
+    assertEquals(Lang.Type.tryParse(tcase), result);
   }
 });
 
 Deno.test("Typelist", () => {
   const pairs = [
-    ['("foo/bar" Test)', ["foo/bar", "Test"]]
-  ]
+    ['("foo/bar" Test)', ["foo/bar", "Test"]],
+  ];
 
   for (const [tcase, result] of pairs) {
-    const ast = Lang.Typelist.tryParse(tcase)
+    const ast = Lang.Typelist.tryParse(tcase);
 
-    assert(Array.isArray(ast))
-    assert(ast.length === result.length)
+    assert(Array.isArray(ast));
+    assert(ast.length === result.length);
     for (let idx = 0; idx < result.length; ++idx) {
-      assertEquals(ast[idx], result[idx])
+      assertEquals(ast[idx], result[idx]);
     }
   }
 });
 
 Deno.test("TypeDeclaration", () => {
   const pairs = [
-    ['foo', ['foo']],
-    ['("foo/bar" Test)', ["foo/bar", "Test"]]
-  ]
+    ["foo", ["foo"]],
+    ['("foo/bar" Test)', ["foo/bar", "Test"]],
+  ];
 
   for (const [tcase, result] of pairs) {
-    const ast = Lang.TypeDeclaration.tryParse(tcase)
+    const ast = Lang.TypeDeclaration.tryParse(tcase);
 
-    assert(Array.isArray(ast))
-    assert(ast.length === result.length)
+    assert(Array.isArray(ast));
+    assert(ast.length === result.length);
     for (let idx = 0; idx < result.length; ++idx) {
-      assertEquals(ast[idx], result[idx])
+      assertEquals(ast[idx], result[idx]);
     }
   }
 });
 
 Deno.test("RelationshipName", () => {
   const pairs = [
-    ['foo', 'foo'],
-    ['"foo"', 'foo'],
+    ["foo", "foo"],
+    ['"foo"', "foo"],
     ["$filename", "test-file"],
-    ['$filename', "test-file"]
-  ]
+    ["$filename", "test-file"],
+  ];
 
   for (const [tcase, result] of pairs) {
     for (const [tcase, result] of pairs) {
-      assertEquals(Lang.RelationshipName.tryParse(tcase), result)
+      assertEquals(Lang.RelationshipName.tryParse(tcase), result);
     }
   }
 });
 
 Deno.test("EntityName", () => {
   const pairs = [
-    ['foo', 'foo'],
-    ['"foo"', 'foo'],
+    ["foo", "foo"],
+    ['"foo"', "foo"],
     ["$filename", "test-file"],
-    ['$filename', "test-file"]
-  ]
+    ["$filename", "test-file"],
+  ];
 
   for (const [tcase, result] of pairs) {
     for (const [tcase, result] of pairs) {
-      assertEquals(Lang.EntityName.tryParse(tcase), result)
+      assertEquals(Lang.EntityName.tryParse(tcase), result);
     }
   }
 });
 
 Deno.test("TwoPartRelationship", () => {
   const pairs = [
-    ['(foo BAR)', [
-      ['is', 'BAR', 'Entity'],
-      ['foo', 'BAR', 'Entity']]
-    ],
-    ['(foo "bar")', [
-      ['is', 'bar', 'Entity'],
-      ['foo', 'bar', 'Entity']]
-    ]
-  ]
+    ["(has baz)", [
+      new Triple("is", "baz", "Entity"),
+      new Triple("has", undefined, "baz"),
+    ]],
+  ];
 
   for (const [tcase, result] of pairs) {
-    const ast = Lang.TwoPartRelationship.tryParse(tcase)
-    assert(Array.isArray(ast))
-    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
-    assert(Array.isArray(ast[0]))
+    const ast = Lang.TwoPartRelationship.tryParse(tcase);
+    assert(Array.isArray(ast));
 
-    for (let idx = 0; idx < result[0].length; idx++) {
-      assertEquals(result[0][idx], ast[0][idx])
-    }
-  }
-});
-
-Deno.test("TwoPartRelationship", () => {
-  const pairs = [
-    ['(foo BAR)', [
-      ['is', 'BAR', 'Entity'],
-      ['foo', 'BAR']]
-    ],
-    ['(foo "bar")', [
-      ['is', 'bar', 'Entity'],
-      ['foo', 'bar']]
-    ]
-  ]
-
-  for (const [tcase, result] of pairs) {
-    const ast = Lang.TwoPartRelationship.tryParse(tcase)
-    assert(Array.isArray(ast))
-    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
-    assert(Array.isArray(ast[0]))
-
-    for (let idx = 0; idx < result[0].length; idx++) {
-      assertEquals(result[0][idx], ast[0][idx])
+    for (let idx = 0; idx < result.length; ++idx) {
+      assert(ast[idx] instanceof Triple);
+      assert(ast[idx].equals(result[idx]), astMessage(ast[idx], result[idx]));
     }
   }
 });
 
 Deno.test("ThreePartRelationship", () => {
   const pairs = [
-    ['(foo BAR baz)', [
-      ['is', 'BAR', 'baz'],
-      ['foo', 'BAR']]
-    ],
-    ['(foo BAR (baz bing))', [
-      ['is', 'BAR', 'baz'],
-      ['is', 'BAR', 'bing'],
-      ['foo', 'BAR']]
-    ]
-  ]
+    ["(foo BAR baz)", [
+      new Triple("is", "BAR", "baz"),
+      new Triple("foo", undefined, "BAR"),
+    ]],
+    ["(foo BAR (baz bing))", [
+      new Triple("is", "BAR", "baz"),
+      new Triple("is", "BAR", "bing"),
+      new Triple("foo", undefined, "BAR"),
+    ]],
+  ];
 
   for (const [tcase, result] of pairs) {
-    const ast = Lang.ThreePartRelationship.tryParse(tcase)
-    assert(Array.isArray(ast))
-    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
-    assert(Array.isArray(ast[0]))
+    const ast = Lang.ThreePartRelationship.tryParse(tcase);
+    assert(Array.isArray(ast), "ast not an array");
 
-    for (let idx = 0; idx < result[0].length; idx++) {
-      assertEquals(result[0][idx], ast[0][idx])
+    for (let idx = 0; idx < result.length; ++idx) {
+      assert(ast[idx] instanceof Triple);
+      assert(ast[idx].equals(result[idx]), astMessage(ast[idx], result[idx]));
     }
   }
 });
 
 Deno.test("OnePartEntity", () => {
-  const pairs = [
-    ['(foo)', [
-      ['is', 'foo', 'Entity']
-    ]]
-  ]
+  const pairs: any = [
+    ["(foo)", [
+      new Triple("is", "foo", "Entity"),
+    ]],
+  ];
 
   for (const [tcase, result] of pairs) {
-    const ast = Lang.OnePartEntity.tryParse(tcase)
-    assert(Array.isArray(ast))
-    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
-    assert(Array.isArray(ast[0]))
+    const ast = Lang.OnePartEntity.tryParse(tcase);
+    assert(Array.isArray(ast));
 
-    for (let idx = 0; idx < result[0].length; idx++) {
-      assertEquals(result[0][idx], ast[0][idx])
+    for (let idx = 0; idx < result.length; ++idx) {
+      assert(ast[idx] instanceof Triple);
+      assert(ast[idx].equals(result[idx]));
     }
   }
 });
 
 Deno.test("TwoPartEntity", () => {
   const pairs = [
-    ['(foo bar)', [
-      ['is', 'foo', 'bar']
+    ["(foo BAR)", [
+      new Triple("is", "foo", "BAR"),
     ]],
-    ['(foo (bar baz))', [
-      ['is', 'foo', 'bar'],
-      ['is', 'foo', 'baz']
-    ]]
-  ]
+    ['(foo "bar")', [
+      new Triple("is", "foo", "bar"),
+    ]],
+  ];
 
   for (const [tcase, result] of pairs) {
-    const ast = Lang.TwoPartEntity.tryParse(tcase)
-    assert(Array.isArray(ast))
-    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
-    assert(Array.isArray(ast[0]))
+    const ast = Lang.TwoPartEntity.tryParse(tcase);
+    assert(Array.isArray(ast));
 
-    for (let idx = 0; idx < result[0].length; idx++) {
-      assertEquals(result[0][idx], ast[0][idx])
+    for (let idx = 0; idx < result.length; ++idx) {
+      assert(ast[idx] instanceof Triple, "not a triple");
+      assert(ast[idx].equals(result[idx]), "triple did not match");
     }
   }
 });
 
-
 Deno.test("FullEntity", () => {
   const src0 = `(entname enttype
   (relname0 "reltgt0" reltype0)
-  (relname1 reltgt1))`
+  (relname1 reltgt1))`;
 
   const pairs = [
     [src0, [
-      ['is', 'entname', 'enttype'],
-      ['is', 'reltgt0', 'reltype0'],
-      ['relname0', 'entname', 'reltgt0'],
-      ['is', 'reltgt1', 'Entity'],
-      ['relname1', 'entname', 'reltgt1'],
-    ]]
-  ]
+      new Triple("is", "entname", "enttype"),
+      new Triple("is", "reltgt0", "reltype0"),
+      new Triple("relname0", "entname", "reltgt0"),
+
+      new Triple("is", "reltgt1", "Entity"),
+      new Triple("relname1", "entname", "reltgt1"),
+    ]],
+  ];
 
   for (const [tcase, result] of pairs) {
-    const ast = Lang.FullEntity.tryParse(tcase)
-    assert(Array.isArray(ast))
-    assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
-
-    for (const subarray of ast) {
-      assert(Array.isArray(subarray))
-    }
+    const ast = Lang.FullEntity.tryParse(tcase);
+    assert(Array.isArray(ast));
 
     for (let idx = 0; idx < result.length; idx++) {
-      for (let jdx = 0; jdx < result[idx].length; jdx++) {
-        assertEquals(result[idx][jdx], ast[idx][jdx])
-      }
+      assert(ast[idx] instanceof Triple, "not a triple");
+      assert(ast[idx].equals(result[idx]), "triple did not match");
     }
   }
 });
