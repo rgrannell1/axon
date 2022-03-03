@@ -215,17 +215,17 @@ Deno.test("TwoPartEntity", () => {
 
 
 Deno.test("FullEntity", () => {
-  const src0 = `(foo bar
-  (has "bing" baz)
-  (has bong))`
+  const src0 = `(entname enttype
+  (relname0 "reltgt0" reltype0)
+  (relname1 reltgt1))`
 
   const pairs = [
     [src0, [
-      ['is', 'foo', 'bar'],
-      ['is', 'bing', 'baz'],
-      ['has', 'bar', 'bing'],
-      ['is', 'bong', 'Entity'],
-      ['has', 'bar', 'bong']
+      ['is', 'entname', 'enttype'],
+      ['is', 'reltgt0', 'reltype0'],
+      ['relname0', 'entname', 'reltgt0'],
+      ['is', 'reltgt1', 'Entity'],
+      ['relname1', 'entname', 'reltgt1'],
     ]]
   ]
 
@@ -233,10 +233,15 @@ Deno.test("FullEntity", () => {
     const ast = Lang.FullEntity.tryParse(tcase)
     assert(Array.isArray(ast))
     assert(ast.length === result.length, `mismatch of ast, result length: ${JSON.stringify(ast, null, 2)}`)
-    assert(Array.isArray(ast[0]))
 
-    for (let idx = 0; idx < result[0].length; idx++) {
-      assertEquals(result[0][idx], ast[0][idx])
+    for (const subarray of ast) {
+      assert(Array.isArray(subarray))
+    }
+
+    for (let idx = 0; idx < result.length; idx++) {
+      for (let jdx = 0; jdx < result[idx].length; jdx++) {
+        assertEquals(result[idx][jdx], ast[idx][jdx])
+      }
     }
   }
 });

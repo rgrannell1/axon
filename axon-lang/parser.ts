@@ -102,8 +102,8 @@ export const AxonLanguage = (ctx: NoteContext) => {
 
     Relationship(rules: any): any {
       return P.alt(
+        rules.ThreePartRelationship, // add nested
         rules.TwoPartRelationship,
-        rules.ThreePartRelationship // add nested
       ).desc("Relationship");
     },
   };
@@ -136,22 +136,30 @@ export const AxonLanguage = (ctx: NoteContext) => {
         .trim(P.optWhitespace)
         .wrap(P.string(OPEN_PAREN), P.string(CLOSE_PAREN))
         .desc("FullEntity")
-        .map((entity: any) => {
-          let facts = []
-
-          const name = entity[0]
-          const types = entity[1]
-          const rels = entity.slice(2)
-
-          for (const rel of rels) {
-            for (const fact of rel) {
-              facts.push([fact[0], name, fact[1]])
-            }
-          }
+        .map((entity: any[]) => {
+          let facts:string[][] = []
+          const name: string = entity[0]
+          const types: string[] = entity[1]
+          const rels: any[] = entity.slice(2)
 
           for (const type of types) {
             facts.push(['is', name, type])
           }
+
+          for (const relgroup of rels) {
+            for (const rel of relgroup) {
+              const [relname, srcname] = rel[1]
+              const reltype = rel[2]
+                ? rel[2]
+                : ['Entity']
+console.log(rel)
+              for (const subtype of reltype) {
+                facts.push(['is', srcname, subtype])
+              }
+              facts.push([relname, name, srcname])
+            }
+          }
+
 
           return facts
         });
