@@ -1,6 +1,7 @@
 import { Vault } from "../notes/vault.ts";
 import { AXON_CLI } from "../commons/constants.ts";
 import { parse } from "https://deno.land/std@0.127.0/flags/mod.ts";
+import { Neo4jDB } from "../database/neo4j.ts";
 
 export class CLI {
   static reportError(message: string) {
@@ -30,9 +31,18 @@ export class CLI {
     const args = CLI.readArgs();
     const vault = new Vault(args.dpath);
 
+    const db = new Neo4jDB(
+      "bolt://localhost:7687",
+      Deno.env.get("AXON_USER"),
+      Deno.env.get("AXON_PASSWORD"),
+    );
+
     for await (const note of vault.listNotes()) {
-      const res = JSON.stringify(await note.parse(), null, 2);
-      console.log(res);
+      for (const fact of await note.parse()) {
+        await db.addTriple(fact);
+      }
     }
+
+    db.driver.close();
   }
 }
