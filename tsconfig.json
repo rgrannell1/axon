@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "alwaysStrict": false,
+    "noImplicitUseStrict": true,
+    "noImplicitAny": false
+  }
+}

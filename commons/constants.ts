@@ -19,5 +19,5 @@ export enum AxonEntities {
   HEADING = "Axon/Heading",
   HEADING_DEPTH = "Axon/HeadingDepth",
   NOTE = "Axon/Note",
-  NOTE_NAME = "Axon/NoteName"
+  NOTE_NAME = "Axon/NoteName",
 }

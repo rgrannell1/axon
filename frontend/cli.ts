@@ -1,7 +1,11 @@
 import { Vault } from "../notes/vault.ts";
 import { AXON_CLI } from "../commons/constants.ts";
 import { parse } from "https://deno.land/std@0.127.0/flags/mod.ts";
-import { Neo4jDB } from "../database/neo4j.ts";
+import { Triple } from "../commons/model.ts";
+import { Facts, Search } from "../search/search.ts";
+
+import logic from "https://raw.githubusercontent.com/rgrannell1/LogicTS/master/logic.ts";
+const $lvar = logic.lvar;
 
 export class CLI {
   static reportError(message: string) {
@@ -27,22 +31,22 @@ export class CLI {
 
     return args;
   }
+
   static async start(): Promise<void> {
     const args = CLI.readArgs();
     const vault = new Vault(args.dpath);
-
-    const db = new Neo4jDB(
-      "bolt://localhost:7687",
-      Deno.env.get("AXON_USER"),
-      Deno.env.get("AXON_PASSWORD"),
-    );
+    const triples: Triple[] = [];
 
     for await (const note of vault.listNotes()) {
-      for (const fact of await note.parse()) {
-        await db.addTriple(fact);
-      }
+      const facts = await note.parse();
+      triples.push(...facts);
     }
 
-    db.driver.close();
+    const $facts = new Facts(triples);
+
+    const search = new Search($facts);
+    console.log(search.entities());
+
+    //    console.log(logic.run(res, [$rel]))
   }
 }

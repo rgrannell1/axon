@@ -32,7 +32,7 @@ export class AxonLanguage {
   }
 
   parse(data: Record<string, any>): Triple[] {
-    const triples = [];
+    const triples: Triple[] = [];
 
     for (const [entsym, rels] of Object.entries(data)) {
       const entname = this.ctx.replace(entsym);
@@ -65,7 +65,7 @@ export class AxonLanguage {
                   this.ctx.replace(tgttype),
                 ),
               );
-              triples.push(relname, entname, tgtname);
+              triples.push(new Triple(relname, entname, tgtname));
             }
           }
 

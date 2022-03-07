@@ -7,6 +7,7 @@ import {
 import { AxonLanguage, NoteContext } from "../axon/parser.ts";
 import { Triple } from "../commons/model.ts";
 import { AxonEntities } from "../commons/constants.ts";
+import JSONLD from "https://unpkg.com/jsonld@1.0.0/dist/jsonld.min.js";
 
 /*
  * BlockId
