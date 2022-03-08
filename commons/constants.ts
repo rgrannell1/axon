@@ -1,12 +1,14 @@
 export const AXON_CLI = `
 Usage:
-  axon --dpath <dir> [--plugin <fpath> ...]
+  axon search --dpath <dir> (--plugin <fpath> ...) [--json|--csv]
   axon (-h|--help)
 
 Description:
   Axon CLI
 
 Options:
+  --json              Display output as JSON.
+  --csv               Display output as CSV.
   --dpath <dir>       Axon note directory.
   --plugin <fpath>    A CSV of Typescript plugins for Axon.
 `;

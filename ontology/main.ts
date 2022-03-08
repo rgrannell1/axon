@@ -9,6 +9,14 @@ const {
   SubFilters,
 } = Search;
 
+export const All = function* (triples: Triple[]) {
+  const $ = Q(triples);
+
+  for (const triple of Fetchers.All(Parts.True)($)) {
+    yield triple;
+  }
+};
+
 export const DistinctRels = function* (triples: Triple[]) {
   const $ = Q(triples);
 
