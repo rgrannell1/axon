@@ -1,10 +1,14 @@
 export const AXON_CLI = `
 Usage:
-  axon --dpath <dir>
+  axon --dpath <dir> [--plugin <fpath> ...]
   axon (-h|--help)
 
 Description:
   Axon CLI
+
+Options:
+  --dpath <dir>       Axon note directory.
+  --plugin <fpath>    A CSV of Typescript plugins for Axon.
 `;
 
 export enum AxonRels {

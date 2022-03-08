@@ -31,24 +31,35 @@ export class AxonLanguage {
     this.ctx = ctx;
   }
 
-  parse(data: Record<string, any>): Triple[] {
+  parse(data: any): any {
     const triples: Triple[] = [];
 
-    for (const [entsym, rels] of Object.entries(data)) {
-      const entname = this.ctx.replace(entsym);
+    if (!Array.isArray(data)) {
+      const msg = `frontmatter not an array in ${
+        this.ctx.substitutions["$filepath"]
+      }`;
+      throw new Error(msg);
+    }
+
+    for (const rels of data) {
+      const id = rels.id;
+      if (!id) {
+        throw new Error("id missing from entity");
+      }
+      const entname = id;
 
       for (const [relsym, tgt] of Object.entries(rels)) {
-        const relname = this.ctx.replace(relsym);
+        const relname = relsym;
 
         if (typeof tgt === "string") {
-          triples.push(new Triple(relname, entname, tgt));
+          triples.push(new Triple(relname, entname, tgt as any));
           continue;
         }
 
         if (Array.isArray(tgt)) {
-          for (const subtgt of tgt) {
+          for (const subtgt of (tgt as any)) {
             if (typeof subtgt === "string") {
-              const subname = this.ctx.replace(subtgt);
+              const subname = subtgt;
               triples.push(
                 new Triple(AxonRels.IS, subtgt, AxonEntities.ENTITY),
               );
@@ -61,10 +72,11 @@ export class AxonLanguage {
               triples.push(
                 new Triple(
                   AxonRels.IS,
-                  this.ctx.replace(tgtname),
-                  this.ctx.replace(tgttype),
+                  tgtname,
+                  tgttype,
                 ),
               );
+
               triples.push(new Triple(relname, entname, tgtname));
             }
           }
@@ -74,6 +86,6 @@ export class AxonLanguage {
       }
     }
 
-    return triples;
+    return triples.map((triple) => triple.applyCtx(this.ctx));
   }
 }

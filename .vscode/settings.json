@@ -11,5 +11,8 @@
     "titleBar.inactiveBackground": "#f9e64f99",
     "titleBar.inactiveForeground": "#15202b99"
   },
-  "peacock.color": "#f9e64f"
+  "peacock.color": "#f9e64f",
+  "deno.enable": true, // enables extension
+  "deno.lint": true, // inline deno lint diagnostics, requires `deno.unstable`
+  "deno.unstable": true // also provides unstable type declarations in VS Code
 }

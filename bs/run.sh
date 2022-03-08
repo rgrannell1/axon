@@ -8,4 +8,6 @@ deno run \
   --allow-net \
   --allow-env \
   --no-check=remote \
-  index.ts --dpath ~/Drive/Axon
+  index.ts \
+  --dpath ~/Drive/Axon \
+  --plugin ~/Code/deno-axon/ontology/main.ts

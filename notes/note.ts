@@ -5,9 +5,7 @@ import {
   TokenType,
 } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
 import { AxonLanguage, NoteContext } from "../axon/parser.ts";
-import { Triple } from "../commons/model.ts";
 import { AxonEntities } from "../commons/constants.ts";
-import JSONLD from "https://unpkg.com/jsonld@1.0.0/dist/jsonld.min.js";
 
 /*
  * BlockId
@@ -91,83 +89,84 @@ export class Note {
   }
 
   headingFacts(token: Record<string, any>) {
-    return [
-      new Triple("is", token.text, AxonEntities.HEADING),
-      new Triple("is", token.depth, AxonEntities.HEADING_DEPTH),
-      new Triple("has", token.text, token.depth),
-    ];
+    return {
+      "@type": "MarkdownNote/Heading",
+      "depth": token.depth,
+      "text": token.text,
+    };
   }
 
-  facts(tokens: Record<string, any>[], ctx: NoteContext): Triple[] {
-    const triples: Triple[] = [];
+  facts(tokens: Record<string, any>[], ctx: NoteContext) {
     const filename = ctx.substitutions["$filename"];
     const filepath = ctx.substitutions["$filepath"];
 
-    triples.push(
-      new Triple("is", filepath, AxonEntities.NOTE),
-      new Triple("is", filename, AxonEntities.NOTE_NAME),
-      new Triple("has", filepath, filename),
-    );
+    const note: any = {
+      is: ["MarkdownNote", "AxonNote"],
+      path: filepath,
+      name: filename,
+      blocks: [],
+      frontmatter: [],
+      contents: [],
+    };
 
-    let blockId = null;
-    const state: Record<string, any[]> = {};
+    let prev = note.contents;
+    let tgt = note.contents;
 
     for (const token of tokens) {
       // push the heading
       if (token.type === "heading") {
-        tokens.push(...this.headingFacts(token));
+        tgt.push(this.headingFacts(token));
         continue;
       }
 
       // we want to save this content of this block as axon facts
       if (token.type === AxonEntities.BLOCK_ID) {
         if (token.tag === "open") {
-          blockId = token.id;
-          triples.push(new Triple("is", token.id, AxonEntities.BLOCK_ID));
-          triples.push(new Triple("has", filepath, token.id));
+          const block = {
+            is: "MarkdownNote/BlockId",
+            id: token.id,
+            contents: [],
+          };
+          note.blocks.push(token.id);
+          tgt.push(block);
+
+          tgt = block.contents;
         }
 
         if (token.tag === "close") {
-          blockId = null;
+          tgt = prev;
         }
         continue;
       }
 
-      // if a lock is present, push content into state to store later
-      if (blockId) {
-        if (!(blockId in state)) {
-          state[blockId] = [];
-        }
-
-        state[blockId].push(token);
+      if (token.type === "code") {
+        tgt.push({
+          is: "MarkdownNote/CodeBlock",
+          text: token.text,
+          lang: token.lang ?? "unknown",
+        });
+        continue;
       }
+
+      if (token.type === "text") {
+        tgt.push({
+          is: "MarkdownNote/Text",
+          text: token.text,
+        });
+        continue;
+      }
+
+      if (token.type === "space") {
+        continue;
+      }
+
+      tgt.push({
+        is: "MarkdownNote/" + token.type,
+        text: token.text,
+      });
     }
 
-    for (const [ref, tokens] of Object.entries(state)) {
-      for (const token of tokens) {
-        // attach code-blocks
-        if (token.type === "code") {
-          triples.push(new Triple("is", token.text, AxonEntities.CODE_BLOCK));
-          triples.push(new Triple("has", ref, token.text));
-
-          if (token.lang) {
-            triples.push(new Triple("written-in", token.text, token.lang));
-          }
-          continue;
-        }
-
-        if (token.type === "text") {
-          triples.push(new Triple("is", token.text, AxonEntities.TEXT));
-          triples.push(new Triple("has", ref, token.text));
-          continue;
-        }
-
-        //todo add lists etc
-        //console.error('cannot store token' + JSON.stringify(token))
-      }
-    }
-
-    return triples;
+    return note;
   }
 
   async parse() {
@@ -177,12 +176,17 @@ export class Note {
       $filename: this.fname(),
     });
 
-    const { frontmatter, tokens } = this.lex(content, ctx);
-    const noteFacts = this.facts(tokens, ctx);
+    try {
+      var { frontmatter, tokens } = this.lex(content, ctx);
+      var noteFacts = this.facts(tokens, ctx);
+    } catch (err) {
+      console.error("file://" + this.fpath);
+      throw err;
+    }
 
     const lang = new AxonLanguage(ctx);
-    const triples = lang.parse(frontmatter);
+    const frontmatterFacts = lang.parse(frontmatter);
 
-    return triples.concat(noteFacts);
+    return frontmatterFacts;
   }
 }

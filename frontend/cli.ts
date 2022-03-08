@@ -1,52 +1,31 @@
-import { Vault } from "../notes/vault.ts";
 import { AXON_CLI } from "../commons/constants.ts";
-import { parse } from "https://deno.land/std@0.127.0/flags/mod.ts";
-import { Triple } from "../commons/model.ts";
-import { Facts, Search } from "../search/search.ts";
+import { Backend } from "../core/backend.ts";
 
-import logic from "https://raw.githubusercontent.com/rgrannell1/LogicTS/master/logic.ts";
-const $lvar = logic.lvar;
+import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
 
 export class CLI {
   static reportError(message: string) {
     console.error(`Axon: ${message}`);
   }
 
-  static showHelp() {
-    console.log(AXON_CLI);
-  }
-
   static readArgs() {
-    const args = parse(Deno.args);
+    const args = docopt(AXON_CLI);
 
-    if (args.h || args.help) {
-      console.log(AXON_CLI);
-      Deno.exit(0);
-    }
-
-    if (!args.dpath) {
-      CLI.reportError("--dpath was not provided");
-      Deno.exit(1);
-    }
-
-    return args;
+    console.log(args)
+    return {
+      dpath: args["--dpath"],
+      plugins: args['--plugin']
+    };
   }
 
   static async start(): Promise<void> {
     const args = CLI.readArgs();
-    const vault = new Vault(args.dpath);
-    const triples: Triple[] = [];
 
-    for await (const note of vault.listNotes()) {
-      const facts = await note.parse();
-      triples.push(...facts);
+    const backend = new Backend(args.dpath);
+    const Searches = await backend.loadPlugins(args.plugins);
+
+    for (const x of await backend.search(Searches.DistinctValue)) {
+      console.log(x);
     }
-
-    const $facts = new Facts(triples);
-
-    const search = new Search($facts);
-    console.log(search.entities());
-
-    //    console.log(logic.run(res, [$rel]))
   }
 }
