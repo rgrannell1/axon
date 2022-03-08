@@ -33,15 +33,26 @@ export class Reporter {
   }
 }
 
+type Args = {
+  search: boolean;
+  export: boolean;
+  dpath: string;
+  plugins: string[];
+  csv: boolean;
+  json: boolean;
+};
+
 export class CLI {
   static reportError(message: string) {
     console.error(`Axon: ${message}`);
   }
 
-  static readArgs() {
+  static readArgs(): Args {
     const args = docopt(AXON_CLI);
 
     return {
+      search: args.search,
+      export: args.export,
       dpath: args["--dpath"],
       plugins: args["--plugin"],
       csv: args["--csv"],
@@ -49,12 +60,11 @@ export class CLI {
     };
   }
 
-  static async start(): Promise<void> {
-    const args = CLI.readArgs();
+  static async export(backend: Backend, args: any): Promise<void> {
+    backend.exportNeo4j()
+  }
 
-    const backend = new Backend(args.dpath);
-    const Searches = await backend.loadPlugins(args.plugins);
-
+  static async search(backend: Backend, args: any): Promise<void> {
     let fmt: FormatOptions;
 
     if (args.json) {
@@ -65,7 +75,22 @@ export class CLI {
       fmt = FormatOptions.Text;
     }
 
+    await backend.init(args.plugins);
+
     const reporter = new Reporter(fmt);
-    reporter.report(await backend.search(Searches.All));
+    reporter.report(await backend.search("All"));
+  }
+
+  static async start(): Promise<void> {
+    const args = CLI.readArgs();
+
+    const backend = new Backend(args.dpath);
+    await backend.init(args.plugins);
+
+    if (args.search) {
+      await this.search(backend, args);
+    } else if (args.export) {
+      await this.export(backend, args);
+    }
   }
 }

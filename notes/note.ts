@@ -6,6 +6,8 @@ import {
 } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
 import { AxonLanguage, NoteContext } from "../axon/parser.ts";
 import { AxonEntities } from "../commons/constants.ts";
+import { createHash } from "https://deno.land/std/hash/mod.ts";
+import { Triple } from "../commons/model.ts";
 
 /*
  * BlockId
@@ -59,6 +61,10 @@ export class Note {
     return Deno.readTextFile(this.fpath);
   }
 
+  hash(content: string) {
+    return createHash("sha1").update(content).toString();
+  }
+
   lex(content: string, ctx: NoteContext) {
     const lex = BlockLexer.lex(content);
     const tokens = lex.tokens.map((token: Record<string, any>) => {
@@ -96,12 +102,14 @@ export class Note {
     };
   }
 
-  facts(tokens: Record<string, any>[], ctx: NoteContext) {
+  parseText(tokens: Record<string, any>[], ctx: NoteContext) {
     const filename = ctx.substitutions["$filename"];
     const filepath = ctx.substitutions["$filepath"];
+    const hash = ctx.substitutions["$hash"];
 
     const note: any = {
       is: ["MarkdownNote", "AxonNote"],
+      hash,
       path: filepath,
       name: filename,
       blocks: [],
@@ -169,16 +177,29 @@ export class Note {
     return note;
   }
 
+  textTriples(note: any) {
+    const facts: [any, any, any][] = [];
+
+    facts.push(["id", note.path, AxonEntities.NOTE]);
+    facts.push(["is", note.name, AxonEntities.NOTE_NAME]);
+    facts.push(["has", note.path, note.name]);
+    facts.push(["is", note.hash, AxonEntities.NOTE_HASH]);
+    facts.push(["has", note.path, note.hash]);
+
+    return facts.map((fact) => new Triple(fact[0], fact[1], fact[2]));
+  }
+
   async parse() {
     const content = await this.read();
     const ctx = new NoteContext({
       $filepath: this.fpath,
       $filename: this.fname(),
+      $hash: this.hash(content),
     });
 
     try {
       var { frontmatter, tokens } = this.lex(content, ctx);
-      var noteFacts = this.facts(tokens, ctx);
+      var noteFacts = this.textTriples(this.parseText(tokens, ctx));
     } catch (err) {
       console.error("file://" + this.fpath);
       throw err;
@@ -187,6 +208,6 @@ export class Note {
     const lang = new AxonLanguage(ctx);
     const frontmatterFacts = lang.parse(frontmatter);
 
-    return frontmatterFacts;
+    return frontmatterFacts.concat(noteFacts);
   }
 }

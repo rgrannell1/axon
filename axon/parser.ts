@@ -61,7 +61,7 @@ export class AxonLanguage {
             if (typeof subtgt === "string") {
               const subname = subtgt;
               triples.push(
-                new Triple(AxonRels.IS, subtgt, AxonEntities.ENTITY),
+                new Triple(AxonRels.IS, subtgt, AxonEntities.TOP_TYPE),
               );
               triples.push(new Triple(relname, entname, subname));
             }

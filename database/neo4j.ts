@@ -19,17 +19,21 @@ export class Neo4jDB {
     this.driver = neo4j.driver(url, neo4j.auth.basic(username, password));
   }
 
-  async addTriple(triple: Triple) {
+  async addTriple(triple: Triple, srcConcept: boolean, tgtConcept: boolean) {
     if (typeof triple !== "object") {
       return;
     }
     const session = this.driver.session();
 
+    const srcLabel = srcConcept ? 'Concept' : 'Thing'
+    const tgtLabel = tgtConcept ? 'Concept' : 'Thing'
+
     const name = triple.relname.replace("-", "_");
+
     await session.run(
-      `
-    merge (src:Entity {name: $srcname})
-    merge (tgt:Entity {name: $tgtname})
+    `
+    merge (src:${srcLabel} {name: $srcname})
+    merge (tgt:${tgtLabel} {name: $tgtname})
 
     merge (src)-[:${name}]-(tgt)
     `,

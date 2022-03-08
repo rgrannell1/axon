@@ -1,7 +1,8 @@
-
 export const AXON_CLI = `
 Usage:
   axon search --dpath <dir> (--plugin <fpath> ...) [--json|--csv]
+  axon export neo4j --dpath <dir>
+  axon export sqlite
   axon (-h|--help)
 
 Description:
@@ -11,6 +12,7 @@ Commands
   search              retrieve search-results from Axon
 
 Options:
+  --name              The name of the search to run. The search is defined in a loaded plugin.
   --json              Display output as JSON.
   --csv               Display output as CSV.
   --dpath <dir>       Axon note directory.
@@ -22,7 +24,6 @@ export enum AxonRels {
 }
 
 export enum AxonEntities {
-  ENTITY = "Entity",
   BLOCK_ID = "Axon/BlockId",
   TEXT = "Axon/Text",
   CODE_BLOCK = "Axon/CodeBlock",
@@ -30,6 +31,7 @@ export enum AxonEntities {
   HEADING_DEPTH = "Axon/HeadingDepth",
   NOTE = "Axon/Note",
   NOTE_NAME = "Axon/NoteName",
-  TOP_TYPE = 'Axon/Thing',
-  BOTTOM_TYPE = 'Axon/Nothing'
+  NOTE_HASH = "Axon/NoteHash",
+  TOP_TYPE = "Axon/Thing",
+  BOTTOM_TYPE = "Axon/Nothing",
 }

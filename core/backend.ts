@@ -1,15 +1,20 @@
 import { Triple } from "../commons/model.ts";
+import { Config } from "../config/config.ts";
+import { Neo4jDB } from "../database/neo4j.ts";
 import { Vault } from "../notes/vault.ts";
 import { Subsumptions } from "./logic.ts";
 
 export class Backend {
   _triples: Triple[] = [];
   dpath: string;
-  subsumptions: Subsumptions
+  subsumptions: Subsumptions;
+
+  cfg?: Config;
+  plugins: Record<string, any> = {};
 
   constructor(dpath: string) {
     this.dpath = dpath;
-    this.subsumptions = new Subsumptions()
+    this.subsumptions = new Subsumptions();
   }
 
   async loadPlugins(fpaths: string[]): Promise<Record<string, any>> {
@@ -28,14 +33,18 @@ export class Backend {
     const triples: Triple[] = [];
 
     for await (const note of vault.listNotes()) {
-      const batch = await note.parse()
+      const batch = await note.parse();
 
-      this.subsumptions.add(batch)
+      this.subsumptions.add(batch);
 
       triples.push(...batch);
     }
 
     return triples;
+  }
+
+  async init(plugins: string[]) {
+    this.plugins = await this.loadPlugins(plugins);
   }
 
   async triples() {
@@ -47,7 +56,33 @@ export class Backend {
     return this._triples;
   }
 
-  async search(search: any) {
+  async search(name: string) {
+    const search = this.plugins[name];
+
+    if (!search) {
+      throw new Error("No search passed to backend");
+    }
+
     return search(await this.triples());
+  }
+
+  async exportNeo4j() {
+    const db = new Neo4jDB('bolt://localhost:7687', Deno.env.get('AXON_USER'), Deno.env.get('AXON_PASSWORD'))
+
+    const triples = await this.triples()
+
+    for (const triple of triples) {
+      if (!triple.tgt) {
+        continue
+      }
+
+      const srcConcept = this.subsumptions.concepts.has(triple.src)
+      const tgtConcept = this.subsumptions.concepts.has(triple.tgt)
+
+      await db.addTriple(triple, srcConcept, tgtConcept)
+    }
+
+    console.log('done')
+    db.driver.close()
   }
 }
