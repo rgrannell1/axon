@@ -1,4 +1,5 @@
-import { Search, Triple } from "../lib.ts";
+//import { Search, Triple } from "../lib.ts";
+import { Search, Triple } from "https://raw.githubusercontent.com/rgrannell1/deno-axon/main/lib.ts";
 
 const {
   Composers,

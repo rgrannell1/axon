@@ -1,3 +1,4 @@
+
 export const AXON_CLI = `
 Usage:
   axon search --dpath <dir> (--plugin <fpath> ...) [--json|--csv]
@@ -5,6 +6,9 @@ Usage:
 
 Description:
   Axon CLI
+
+Commands
+  search              retrieve search-results from Axon
 
 Options:
   --json              Display output as JSON.
@@ -26,4 +30,6 @@ export enum AxonEntities {
   HEADING_DEPTH = "Axon/HeadingDepth",
   NOTE = "Axon/Note",
   NOTE_NAME = "Axon/NoteName",
+  TOP_TYPE = 'Axon/Thing',
+  BOTTOM_TYPE = 'Axon/Nothing'
 }
