@@ -4,6 +4,11 @@ import { createHash } from "https://deno.land/std/hash/mod.ts";
 import { join } from "https://deno.land/std@0.63.0/path/mod.ts";
 import { exists } from "https://deno.land/std/fs/mod.ts";
 
+export type ApplicationState = {
+  triples: Triple[]
+  conceptGraph: Record<string, string>
+}
+
 export class FolderCache implements IVaultCache {
   dpath: string
 

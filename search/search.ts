@@ -11,8 +11,8 @@ export * as Transformers from "./transformers.ts";
 /*
  * Construct a stream from a fixed triples array.
  */
-export function* Q(triples: Triple[]) {
-  for (const triple of triples) {
+export async function* Q(triples: AsyncGenerator<Triple, void, any>) {
+  for await (const triple of triples) {
     yield triple;
   }
 }

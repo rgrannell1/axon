@@ -4,7 +4,7 @@ import { Subsumptions } from "./core/logic.ts";
 // A thing that can export subsumptions and triples
 export interface IExporter {
   init(): Promise<void>;
-  export(subsumptions: Subsumptions, triples: Triple[]): Promise<void>;
+  export(subsumptions: Subsumptions, triples: AsyncGenerator<Triple, void, any>): Promise<void>;
 }
 
 // A cache that stores triples and subsumptions

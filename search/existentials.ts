@@ -6,8 +6,8 @@ import * as Composers from "./composers.ts";
  * Determine whether all or at least one triple matches a pattern
  */
 export const Forall = (search: Search) => {
-  return ($: TripleStream) => {
-    for (const _ of Fetchers.All(Composers.Not(search))($)) {
+  return async ($: TripleStream) => {
+    for await (const _ of Fetchers.All(Composers.Not(search))($)) {
       return false;
     }
 
@@ -15,8 +15,8 @@ export const Forall = (search: Search) => {
   };
 };
 export const Some = (search: Search) => {
-  return ($: TripleStream) => {
-    for (const _ of Fetchers.All(search)($)) {
+  return async ($: TripleStream) => {
+    for await (const _ of Fetchers.All(search)($)) {
       return true;
     }
 
@@ -25,9 +25,9 @@ export const Some = (search: Search) => {
 };
 
 export const Count = (search: Search) => {
-  return ($: TripleStream) => {
+  return async ($: TripleStream) => {
     let count = 0;
-    for (const _ of Fetchers.All(search)($)) {
+    for await (const _ of Fetchers.All(search)($)) {
       count++;
     }
 

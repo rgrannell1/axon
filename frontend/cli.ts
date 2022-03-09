@@ -27,8 +27,8 @@ export class Reporter {
     }
   }
 
-  report<T>(stream: Generator<T, unknown, unknown>): void {
-    for (const value of stream) {
+  async report<T>(stream: AsyncGenerator<T, unknown, unknown>): Promise<void> {
+    for await (const value of stream) {
       console.log(this.formatValue(value));
     }
   }
@@ -87,7 +87,7 @@ export class CLI {
     await backend.init(args.plugins);
 
     const reporter = new Reporter(fmt);
-    reporter.report(await backend.search("All"));
+    await reporter.report(await backend.search("All"));
   }
 
   static async start(): Promise<void> {

@@ -4,10 +4,10 @@ import * as Parts from "./parts.ts";
 import { TripleStream } from "./types.ts";
 
 export const GroupBy = (equivalence: (val: Triple) => string) => {
-  return (vals: TripleStream) => {
+  return async (vals: TripleStream) => {
     const pairs: Record<string, Triple[]> = {};
 
-    for (const val of vals) {
+    for await (const val of vals) {
       const equiv = equivalence(val);
 
       if (equiv in pairs) {

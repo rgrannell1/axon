@@ -4,8 +4,8 @@ import { Search, TripleStream } from "./types.ts";
  * Decide if a subpart of a triple should be returned.
  */
 export const All = (search: Search) => {
-  return function* ($: TripleStream) {
-    for (const triple of $) {
+  return async function* ($: TripleStream) {
+    for await (const triple of $) {
       if (search(triple)) {
         yield triple;
       }
@@ -14,10 +14,10 @@ export const All = (search: Search) => {
 };
 
 export const Take = (search: Search, limit: number) => {
-  return function* ($: TripleStream) {
+  return async function* ($: TripleStream) {
     let yielded = 0;
 
-    for (const triple of $) {
+    for await (const triple of $) {
       if (search(triple)) {
         if (yielded < limit) {
           yield triple;

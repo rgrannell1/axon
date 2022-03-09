@@ -6,7 +6,6 @@ import { Subsumptions } from "./logic.ts";
 import { FolderCache } from "../cache/folder_cache.ts";
 
 export class Backend implements IBackend {
-  _triples: Triple[] = [];
   dpath: string;
   subsumptions: Subsumptions;
 
@@ -31,45 +30,36 @@ export class Backend implements IBackend {
     return custom;
   }
 
-  async readTriples() {
+  async *triples() {
     const vault: Vault = new Vault(this.dpath);
-    const triples: Triple[] = [];
 
     for await (const note of vault.listNotes()) {
       await note.load()
-      if (typeof note.hash === 'undefined') {
-        throw new TypeError('hash undefined')
-      }
+      const hash = note.hash as string
 
       // attempt to load cached triples & subsumptions
-      const cachedTriples = await this.cache.storedTriples(note.fpath, note.hash)
+      const cachedTriples = await this.cache.storedTriples(note.fpath, hash)
       if (cachedTriples) {
-        triples.push(...cachedTriples);
+        for (const triple of cachedTriples) {
+          yield triple
+        }
+
         continue
       }
 
       // not cached, compute them and store
-      const batch = await note.triples();
-      this.cache.storeTriples(note.fpath, note.hash, batch)
+      const noteTriples = await note.triples();
+      this.cache.storeTriples(note.fpath, hash, noteTriples)
 
-      this.subsumptions.add(batch);
-      triples.push(...batch);
+      this.subsumptions.add(noteTriples);
+      for (const triple of noteTriples) {
+        yield triple
+      }
     }
-
-    return triples;
   }
 
   async init(plugins: string[]) {
     this.plugins = await this.loadPlugins(plugins);
-  }
-
-  async triples() {
-    if (this._triples.length > 0) {
-      return this._triples;
-    }
-
-    this._triples = await this.readTriples();
-    return this._triples;
   }
 
   async search(name: string) {
@@ -79,12 +69,11 @@ export class Backend implements IBackend {
       throw new Error("No search passed to backend");
     }
 
-    return search(await this.triples());
+    return search(this.triples());
   }
 
   async export(exporter: IExporter) {
-    const triples = await this.triples();
     await exporter.init();
-    await exporter.export(this.subsumptions, triples);
+    await exporter.export(this.subsumptions, this.triples());
   }
 }
