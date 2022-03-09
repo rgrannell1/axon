@@ -11,5 +11,5 @@ deno run \
   --no-check=remote \
   index.ts search \
   --dpath ~/Drive/Axon \
-  --plugin ~/Code/deno-axon/ontology/main.ts \
+  --plugin ~/Code/deno-axon/src/ontology/main.ts \
   --json

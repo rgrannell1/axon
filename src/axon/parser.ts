@@ -12,7 +12,7 @@ export class AxonLanguage {
     this.ctx = ctx;
   }
 
-  parse(data: any): any {
+  parse(data: any): Triple[] {
     const triples: Triple[] = [];
 
     if (!Array.isArray(data)) {

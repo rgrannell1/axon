@@ -1,3 +1,8 @@
-import { CLI } from "./frontend/cli.ts";
+import { CLI } from "./src/frontend/cli.ts";
+import {Equivalence} from './src/core/tbox.ts'
 
-CLI.start();
+
+
+(new Equivalence).parse()
+
+//CLI.start();
