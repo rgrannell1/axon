@@ -1,4 +1,3 @@
-
 import { INoteContext } from "../interfaces.ts";
 
 export class Triple {

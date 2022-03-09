@@ -1,6 +1,6 @@
 import { Triple } from "../commons/model.ts";
 import { Config } from "../config/config.ts";
-import { IBackend, IExporter, IVaultCache } from "../interfaces.ts";
+import { IBackend, IExporter, INote, IVaultCache } from "../interfaces.ts";
 import { Vault } from "../notes/vault.ts";
 import { Subsumptions } from "./logic.ts";
 import { FolderCache } from "../cache/folder_cache.ts";
@@ -11,12 +11,12 @@ export class Backend implements IBackend {
 
   cfg?: Config;
   plugins: Record<string, any> = {};
-  cache: IVaultCache
+  cache: IVaultCache;
 
   constructor(dpath: string) {
     this.dpath = dpath;
     this.subsumptions = new Subsumptions();
-    this.cache = new FolderCache('/home/rg/Code/deno-axon/.cache');
+    this.cache = new FolderCache("/home/rg/Code/deno-axon/.cache");
   }
 
   async loadPlugins(fpaths: string[]): Promise<Record<string, any>> {
@@ -30,30 +30,36 @@ export class Backend implements IBackend {
     return custom;
   }
 
+  async *noteTriples(note: INote) {
+    await note.load();
+    const hash = note.hash as string;
+
+    // attempt to load cached triples & subsumptions
+    const cachedTriples = await this.cache.storedTriples(note.fpath, hash);
+    if (cachedTriples) {
+      for (const triple of cachedTriples) {
+        yield triple;
+      }
+
+      return;
+    }
+
+    // not cached, compute them and store
+    const noteTriples = await note.triples();
+    this.cache.storeTriples(note.fpath, hash, noteTriples);
+
+    this.subsumptions.add(noteTriples);
+    for (const triple of noteTriples) {
+      yield triple;
+    }
+  }
+
   async *triples() {
     const vault: Vault = new Vault(this.dpath);
 
     for await (const note of vault.listNotes()) {
-      await note.load()
-      const hash = note.hash as string
-
-      // attempt to load cached triples & subsumptions
-      const cachedTriples = await this.cache.storedTriples(note.fpath, hash)
-      if (cachedTriples) {
-        for (const triple of cachedTriples) {
-          yield triple
-        }
-
-        continue
-      }
-
-      // not cached, compute them and store
-      const noteTriples = await note.triples();
-      this.cache.storeTriples(note.fpath, hash, noteTriples)
-
-      this.subsumptions.add(noteTriples);
-      for (const triple of noteTriples) {
-        yield triple
+      for await (const triple of this.noteTriples(note)) {
+        yield triple;
       }
     }
   }

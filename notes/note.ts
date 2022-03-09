@@ -53,7 +53,7 @@ export class Note implements INote {
   dpath: string;
   fpath: string;
   content?: string;
-  hash?: string
+  hash?: string;
 
   static NAME = /[0-9]{12} - (.+)\.md/;
 
@@ -63,8 +63,8 @@ export class Note implements INote {
     this.fpath = join(dpath, name);
   }
 
-  async load () {
-    this.content = await this.read()
+  async load() {
+    this.content = await this.read();
     this.hash = createHash("sha1").update(this.content).toString();
   }
 
@@ -205,8 +205,8 @@ export class Note implements INote {
   }
 
   context(): NoteContext {
-    if (typeof this.hash === 'undefined') {
-      throw new TypeError('hash was undefined; was load-called?')
+    if (typeof this.hash === "undefined") {
+      throw new TypeError("hash was undefined; was load-called?");
     }
 
     return new NoteContext({
@@ -218,12 +218,12 @@ export class Note implements INote {
   }
 
   async triples(): Promise<Triple[]> {
-    const ctx = this.context()
+    const ctx = this.context();
 
     // if the file is unchanged, yield previous triples
 
     try {
-      var { frontmatter, tokens } = this.lex(this.content ?? '', ctx);
+      var { frontmatter, tokens } = this.lex(this.content ?? "", ctx);
       var noteFacts = this.textTriples(this.parseText(tokens, ctx));
     } catch (err) {
       console.error("file://" + this.fpath);

@@ -14,16 +14,15 @@ export class Neo4jExporter implements IExporter {
     );
   }
   async init() {
-
   }
   async export(subsumptions: Subsumptions, $triples: any) {
     const session = this.db.driver.session();
 
     await this.db.clear(session);
 
-    const triples = []
+    const triples = [];
     for await (const triple of $triples) {
-      triples.push(triple)
+      triples.push(triple);
       await this.db.addTriple(session, triple);
     }
 

@@ -22,6 +22,6 @@ export class NoteContext implements INoteContext {
   }
 
   fpath() {
-    return this.substitutions['$filepath']
+    return this.substitutions["$filepath"];
   }
 }
