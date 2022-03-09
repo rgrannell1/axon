@@ -52,6 +52,8 @@ export class Note implements INote {
   name: string;
   dpath: string;
   fpath: string;
+  content?: string;
+  hash?: string
 
   static NAME = /[0-9]{12} - (.+)\.md/;
 
@@ -61,12 +63,13 @@ export class Note implements INote {
     this.fpath = join(dpath, name);
   }
 
-  async read() {
-    return Deno.readTextFile(this.fpath);
+  async load () {
+    this.content = await this.read()
+    this.hash = createHash("sha1").update(this.content).toString();
   }
 
-  hash(content: string) {
-    return createHash("sha1").update(content).toString();
+  async read() {
+    return Deno.readTextFile(this.fpath);
   }
 
   lex(content: string, ctx: INoteContext) {
@@ -201,23 +204,26 @@ export class Note implements INote {
     return facts.map((fact) => new Triple(fact[0], fact[1], fact[2]));
   }
 
-  context(content: string): NoteContext {
+  context(): NoteContext {
+    if (typeof this.hash === 'undefined') {
+      throw new TypeError('hash was undefined; was load-called?')
+    }
+
     return new NoteContext({
       $filepath: this.fpath,
       $filename: this.fname(),
       $dirpath: this.dpath,
-      $hash: this.hash(content),
+      $hash: this.hash,
     });
   }
 
   async triples(): Promise<Triple[]> {
-    const content = await this.read();
-    const ctx = this.context(content)
+    const ctx = this.context()
 
     // if the file is unchanged, yield previous triples
 
     try {
-      var { frontmatter, tokens } = this.lex(content, ctx);
+      var { frontmatter, tokens } = this.lex(this.content ?? '', ctx);
       var noteFacts = this.textTriples(this.parseText(tokens, ctx));
     } catch (err) {
       console.error("file://" + this.fpath);

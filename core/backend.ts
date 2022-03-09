@@ -1,9 +1,9 @@
 import { Triple } from "../commons/model.ts";
 import { Config } from "../config/config.ts";
-import { IExporter } from "../interfaces.ts";
-import { IBackend } from "../interfaces.ts";
+import { IBackend, IExporter, IVaultCache } from "../interfaces.ts";
 import { Vault } from "../notes/vault.ts";
 import { Subsumptions } from "./logic.ts";
+import { FolderCache } from "../cache/folder_cache.ts";
 
 export class Backend implements IBackend {
   _triples: Triple[] = [];
@@ -12,10 +12,12 @@ export class Backend implements IBackend {
 
   cfg?: Config;
   plugins: Record<string, any> = {};
+  cache: IVaultCache
 
   constructor(dpath: string) {
     this.dpath = dpath;
     this.subsumptions = new Subsumptions();
+    this.cache = new FolderCache('/home/rg/Code/deno-axon/.cache');
   }
 
   async loadPlugins(fpaths: string[]): Promise<Record<string, any>> {
@@ -34,10 +36,23 @@ export class Backend implements IBackend {
     const triples: Triple[] = [];
 
     for await (const note of vault.listNotes()) {
+      await note.load()
+      if (typeof note.hash === 'undefined') {
+        throw new TypeError('hash undefined')
+      }
+
+      // attempt to load cached triples & subsumptions
+      const cachedTriples = await this.cache.storedTriples(note.fpath, note.hash)
+      if (cachedTriples) {
+        triples.push(...cachedTriples);
+        continue
+      }
+
+      // not cached, compute them and store
       const batch = await note.triples();
+      this.cache.storeTriples(note.fpath, note.hash, batch)
 
       this.subsumptions.add(batch);
-
       triples.push(...batch);
     }
 

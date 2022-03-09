@@ -10,8 +10,8 @@ export interface IExporter {
 // A cache that stores triples and subsumptions
 export interface IVaultCache {
   cached(fpath: string, hash: string): Promise<boolean>
-  triples(fpath: string, hash: string): Promise<Triple[] | undefined>
-  store(fpath: string, hash: string, triples: Triple[]): Promise<void>
+  storedTriples(fpath: string, hash: string): Promise<Triple[] | undefined>
+  storeTriples(fpath: string, hash: string, triples: Triple[]): Promise<void>
 }
 
 // Note context
@@ -22,7 +22,11 @@ export interface INoteContext {
 
 // A Note
 export interface INote {
-  context(content: string): INoteContext
+  fpath: string
+  hash?: string
+
+  load(): Promise<void>
+  context(): INoteContext
   triples(): Promise<Triple[]>;
 }
 
