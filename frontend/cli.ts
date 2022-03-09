@@ -1,8 +1,8 @@
 import { AXON_CLI } from "../commons/constants.ts";
 import { Backend } from "../core/backend.ts";
-import { Neo4jExporter } from "../database/neo4j.ts";
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
+import { Neo4jExporter } from "../exporters/neo4j.ts";
 
 export enum FormatOptions {
   JSON,

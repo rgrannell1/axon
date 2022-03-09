@@ -1,10 +1,11 @@
 import { Triple } from "../commons/model.ts";
 import { Config } from "../config/config.ts";
+import { IExporter } from "../interfaces.ts";
+import { IBackend } from "../interfaces.ts";
 import { Vault } from "../notes/vault.ts";
-import { IExporter } from "./exporter.ts";
 import { Subsumptions } from "./logic.ts";
 
-export class Backend {
+export class Backend implements IBackend {
   _triples: Triple[] = [];
   dpath: string;
   subsumptions: Subsumptions;
@@ -29,11 +30,11 @@ export class Backend {
   }
 
   async readTriples() {
-    const vault = new Vault(this.dpath);
+    const vault: Vault = new Vault(this.dpath);
     const triples: Triple[] = [];
 
     for await (const note of vault.listNotes()) {
-      const batch = await note.parse();
+      const batch = await note.triples();
 
       this.subsumptions.add(batch);
 

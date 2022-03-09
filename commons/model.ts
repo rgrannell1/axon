@@ -1,4 +1,5 @@
-import { NoteContext } from "../axon/parser.ts";
+
+import { INoteContext } from "../interfaces.ts";
 
 export class Triple {
   relname: string;
@@ -11,7 +12,7 @@ export class Triple {
     this.tgt = tgt;
   }
 
-  applyCtx(ctx: NoteContext) {
+  applyCtx(ctx: INoteContext) {
     this.relname = ctx.replace(this.relname);
     this.src = ctx.replace(this.src);
     this.tgt = ctx.replace(this.tgt);

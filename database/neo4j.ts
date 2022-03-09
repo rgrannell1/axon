@@ -1,7 +1,5 @@
 import * as neo4j from "https://deno.land/x/neo4j_lite_client@4.4.1-preview2/mod.ts";
 import { Triple } from "../commons/model.ts";
-import { IExporter } from "../core/exporter.ts";
-import { Subsumptions } from "../core/logic.ts";
 
 export class Neo4jDB {
   driver: neo4j.Driver;
@@ -89,39 +87,5 @@ export class Neo4jDB {
         tgtname: triple.tgt,
       },
     );
-  }
-}
-
-export class Neo4jExporter implements IExporter {
-  db: Neo4jDB;
-
-  constructor() {
-    this.db = new Neo4jDB(
-      "bolt://localhost:7687",
-      Deno.env.get("AXON_USER"),
-      Deno.env.get("AXON_PASSWORD"),
-    );
-  }
-  async init() {
-  }
-  async export(subsumptions: Subsumptions, triples: Triple[]) {
-    const session = this.db.driver.session();
-
-    await this.db.clear(session);
-
-    for (const triple of triples) {
-      await this.db.addTriple(session, triple);
-    }
-
-    for (const triple of triples) {
-      const src: string[] = Array.from(subsumptions.classes(triple.src));
-      const tgt: string[] = Array.from(subsumptions.classes(triple.tgt));
-
-      await this.db.labelTriple(session, triple, src, tgt);
-    }
-
-    session.close();
-
-    this.db.driver.close();
   }
 }

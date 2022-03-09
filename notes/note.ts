@@ -4,10 +4,13 @@ import {
   BlockLexer,
   TokenType,
 } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
-import { AxonLanguage, NoteContext } from "../axon/parser.ts";
+import { AxonLanguage } from "../axon/parser.ts";
 import { AxonEntities } from "../commons/constants.ts";
 import { createHash } from "https://deno.land/std/hash/mod.ts";
 import { Triple } from "../commons/model.ts";
+import { INote } from "../interfaces.ts";
+import { NoteContext } from "./context.ts";
+import { INoteContext } from "../interfaces.ts";
 
 /*
  * BlockId
@@ -45,7 +48,7 @@ class BlockId {
 }
 
 // TODO less tightly couple this, other versions might be nice
-export class Note {
+export class Note implements INote {
   name: string;
   dpath: string;
   fpath: string;
@@ -66,7 +69,7 @@ export class Note {
     return createHash("sha1").update(content).toString();
   }
 
-  lex(content: string, ctx: NoteContext) {
+  lex(content: string, ctx: INoteContext) {
     const lex = BlockLexer.lex(content);
     const tokens = lex.tokens.map((token: Record<string, any>) => {
       const blockToken = BlockId.parse(token.text);
@@ -198,14 +201,20 @@ export class Note {
     return facts.map((fact) => new Triple(fact[0], fact[1], fact[2]));
   }
 
-  async parse() {
-    const content = await this.read();
-    const ctx = new NoteContext({
+  context(content: string): NoteContext {
+    return new NoteContext({
       $filepath: this.fpath,
       $filename: this.fname(),
       $dirpath: this.dpath,
       $hash: this.hash(content),
     });
+  }
+
+  async triples(): Promise<Triple[]> {
+    const content = await this.read();
+    const ctx = this.context(content)
+
+    // if the file is unchanged, yield previous triples
 
     try {
       var { frontmatter, tokens } = this.lex(content, ctx);

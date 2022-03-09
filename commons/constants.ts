@@ -21,6 +21,7 @@ Options:
 
 export enum AxonRels {
   IS = "is",
+  HAS = "has",
 }
 
 export enum AxonEntities {

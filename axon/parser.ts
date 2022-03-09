@@ -1,33 +1,14 @@
 import { Triple } from "../commons/model.ts";
 import { AxonEntities, AxonRels } from "../commons/constants.ts";
-
-/*
-  * Any special variables that can be injected into
-  * opening frontmatter
-  */
-export class NoteContext {
-  substitutions: Record<string, string>;
-  constructor(substitutions: Record<string, string>) {
-    this.substitutions = substitutions;
-  }
-  replace(name: string): string {
-    for (const [candidate, replacement] of Object.entries(this.substitutions)) {
-      if (name === candidate) {
-        return replacement;
-      }
-    }
-
-    return name;
-  }
-}
+import { INoteContext } from "../interfaces.ts";
 
 /*
  *  Parser axon frontmatter
  */
 export class AxonLanguage {
-  ctx: NoteContext;
+  ctx: INoteContext;
 
-  constructor(ctx: NoteContext) {
+  constructor(ctx: INoteContext) {
     this.ctx = ctx;
   }
 
@@ -35,9 +16,7 @@ export class AxonLanguage {
     const triples: Triple[] = [];
 
     if (!Array.isArray(data)) {
-      const msg = `frontmatter not an array in ${
-        this.ctx.substitutions["$filepath"]
-      }`;
+      const msg = `frontmatter not an array in ${this.ctx.fpath()}`;
       throw new Error(msg);
     }
 

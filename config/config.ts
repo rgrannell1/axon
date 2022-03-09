@@ -1,4 +1,4 @@
-import { join, resolve } from "https://deno.land/std@0.63.0/path/mod.ts";
+import { join } from "https://deno.land/std@0.63.0/path/mod.ts";
 import { exists } from "https://deno.land/std/fs/mod.ts";
 
 export class Config {
