@@ -44,6 +44,7 @@ class BlockId {
   }
 }
 
+// TODO less tightly couple this, other versions might be nice
 export class Note {
   name: string;
   dpath: string;
@@ -105,11 +106,13 @@ export class Note {
   parseText(tokens: Record<string, any>[], ctx: NoteContext) {
     const filename = ctx.substitutions["$filename"];
     const filepath = ctx.substitutions["$filepath"];
+    const dpath = ctx.substitutions["$dirpath"];
     const hash = ctx.substitutions["$hash"];
 
     const note: any = {
       is: ["MarkdownNote", "AxonNote"],
       hash,
+      dpath,
       path: filepath,
       name: filename,
       blocks: [],
@@ -180,9 +183,15 @@ export class Note {
   textTriples(note: any) {
     const facts: [any, any, any][] = [];
 
+    facts.push(["id", note.dpath, AxonEntities.VAULT]);
+    facts.push(["is", note.dpath, AxonEntities.VAULT]);
+
     facts.push(["id", note.path, AxonEntities.NOTE]);
+    facts.push(["is", note.path, AxonEntities.NOTE]);
+    facts.push(["named", note.path, note.name]);
     facts.push(["is", note.name, AxonEntities.NOTE_NAME]);
-    facts.push(["has", note.path, note.name]);
+    facts.push(["part-of", note.path, note.dpath]);
+
     facts.push(["is", note.hash, AxonEntities.NOTE_HASH]);
     facts.push(["has", note.path, note.hash]);
 
@@ -194,6 +203,7 @@ export class Note {
     const ctx = new NoteContext({
       $filepath: this.fpath,
       $filename: this.fname(),
+      $dirpath: this.dpath,
       $hash: this.hash(content),
     });
 

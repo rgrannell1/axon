@@ -22,7 +22,9 @@ export class Subsumptions {
         continue;
       }
 
-      classes.add(curr);
+      if (curr !== instance) {
+        classes.add(curr);
+      }
 
       const neighbours = this.graph.hasOwnProperty(curr)
         ? this.graph[curr]
@@ -48,7 +50,7 @@ export class Subsumptions {
         continue;
       }
 
-      this.concepts.add(tgt)
+      this.concepts.add(tgt);
 
       if (this.graph.hasOwnProperty(src)) {
         this.graph[src].add(tgt);

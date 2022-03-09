@@ -1,7 +1,7 @@
 import { Triple } from "../commons/model.ts";
 import { Config } from "../config/config.ts";
-import { Neo4jDB } from "../database/neo4j.ts";
 import { Vault } from "../notes/vault.ts";
+import { IExporter } from "./exporter.ts";
 import { Subsumptions } from "./logic.ts";
 
 export class Backend {
@@ -66,23 +66,9 @@ export class Backend {
     return search(await this.triples());
   }
 
-  async exportNeo4j() {
-    const db = new Neo4jDB('bolt://localhost:7687', Deno.env.get('AXON_USER'), Deno.env.get('AXON_PASSWORD'))
-
-    const triples = await this.triples()
-
-    for (const triple of triples) {
-      if (!triple.tgt) {
-        continue
-      }
-
-      const srcConcept = this.subsumptions.concepts.has(triple.src)
-      const tgtConcept = this.subsumptions.concepts.has(triple.tgt)
-
-      await db.addTriple(triple, srcConcept, tgtConcept)
-    }
-
-    console.log('done')
-    db.driver.close()
+  async export(exporter: IExporter) {
+    const triples = await this.triples();
+    await exporter.init();
+    await exporter.export(this.subsumptions, triples);
   }
 }

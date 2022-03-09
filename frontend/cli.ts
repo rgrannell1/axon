@@ -1,5 +1,6 @@
 import { AXON_CLI } from "../commons/constants.ts";
 import { Backend } from "../core/backend.ts";
+import { Neo4jExporter } from "../database/neo4j.ts";
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
 
@@ -40,6 +41,8 @@ type Args = {
   plugins: string[];
   csv: boolean;
   json: boolean;
+  neo4j: boolean;
+  sqlite: boolean;
 };
 
 export class CLI {
@@ -57,11 +60,17 @@ export class CLI {
       plugins: args["--plugin"],
       csv: args["--csv"],
       json: args["--json"],
+      neo4j: args["neo4j"],
+      sqlite: args["sqlite"],
     };
   }
 
   static async export(backend: Backend, args: any): Promise<void> {
-    backend.exportNeo4j()
+    if (args.neo4j) {
+      backend.export(new Neo4jExporter());
+    }
+    if (args.sqlite) {
+    }
   }
 
   static async search(backend: Backend, args: any): Promise<void> {

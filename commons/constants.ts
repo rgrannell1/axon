@@ -24,14 +24,15 @@ export enum AxonRels {
 }
 
 export enum AxonEntities {
-  BLOCK_ID = "Axon/BlockId",
-  TEXT = "Axon/Text",
-  CODE_BLOCK = "Axon/CodeBlock",
-  HEADING = "Axon/Heading",
-  HEADING_DEPTH = "Axon/HeadingDepth",
-  NOTE = "Axon/Note",
-  NOTE_NAME = "Axon/NoteName",
-  NOTE_HASH = "Axon/NoteHash",
-  TOP_TYPE = "Axon/Thing",
-  BOTTOM_TYPE = "Axon/Nothing",
+  BLOCK_ID = "Axon_BlockId",
+  TEXT = "Axon_Text",
+  CODE_BLOCK = "Axon_CodeBlock",
+  HEADING = "Axon_Heading",
+  HEADING_DEPTH = "Axon_Heading.Depth",
+  VAULT = "Axon_Vault",
+  NOTE = "Axon_Note",
+  NOTE_NAME = "Axon_NoteName",
+  NOTE_HASH = "Axon_NoteHash",
+  TOP_TYPE = "Axon_Thing",
+  BOTTOM_TYPE = "Axon_Nothing",
 }
