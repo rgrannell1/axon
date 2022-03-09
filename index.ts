@@ -3,6 +3,6 @@ import {Equivalence} from './src/core/tbox.ts'
 
 
 
-(new Equivalence).parse()
+//(new Equivalence).parse()
 
-//CLI.start();
+CLI.start();

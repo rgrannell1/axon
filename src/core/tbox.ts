@@ -16,6 +16,13 @@ class ExistentialOperator {
   }
 }
 
+class ConjunctionOperator {
+  name: string
+  constructor(name: string) {
+    this.name = name
+  }
+}
+
 class ExactMatch {
   name: string
   constructor(name: string) {
@@ -43,11 +50,20 @@ class RoleCall {
   }
 }
 
+class Group {
+  expr: any
+  constructor(expr: any) {
+    this.expr = expr
+  }
+}
+
 export class Frame {
 
 }
 
 type Rules = Record<string, any>
+
+const _ = P.optWhitespace
 
 const Tbox = P.createLanguage({
   Variable () {
@@ -68,7 +84,7 @@ const Tbox = P.createLanguage({
     return P.seq(
       rules.Name,
       P.string('('),
-      rules.ConceptArgument.trim(P.optWhitespace),
+      rules.ConceptArgument.trim(_),
       P.string(')')
     )
     .map((result: string[]) => {
@@ -95,15 +111,31 @@ const Tbox = P.createLanguage({
     .desc('Role')
   },
   Declaration(rules: Rules) {
-    return rules.Variable.trim(P.optWhitespace)
+    return rules.Variable.trim(_)
       .many()
+      .desc('Declaration')
+  },
+  ConjunctionOperator() {
+    return P.alt(
+      P.string('AND'),
+      P.string('OR'))
+      .map((match: string) => new ConjunctionOperator(match))
+      .desc('ConjunctionOperator')
+  },
+  Conjunction(rules: Rules) {
+    return P.seq(
+      rules.ConjunctionOperator.trim(_),
+      rules.Filter.trim(_))
+      .desc('Conjunction')
   },
   Filter(rules: Rules) {
     return P.alt(
-      rules.Role,
-      rules.Concept,
-      rules.ParenFilter
-    )
+      rules.Existential.trim(_),
+      rules.Role.trim(_),
+      rules.Concept.trim(_),
+      rules.ParenFilter.trim(_),
+      rules.Conjunction.trim(_)
+    ).desc('Filter')
   },
   ExistentialOperator() {
     return P.alt(P.string('NONE'), P.string('SOME'), P.string('ALL'))
@@ -112,19 +144,22 @@ const Tbox = P.createLanguage({
   },
   Existential(rules: Rules) {
     return P.seq(
-      rules.ExistentialOperator.trim(P.optWhitespace),
-      rules.Filter.trim(P.optWhitespace),
+      rules.ExistentialOperator.trim(_),
+      rules.Filter.trim(_).many(),
     ).desc('Existential')
   },
   ParenFilter(rules: Rules) {
     return P.seq(
       P.string('('),
-      rules.Filter.trim(P.optWhitespace),
+      rules.Filter.trim(_),
       P.string(')')
-    ).desc('ParenFilter')
+     )
+    .map((match: any[]) => new Group(match[1]))
+    .desc('ParenFilter')
   },
   Return(rules: Rules) {
-    return rules.Variable.trim(P.optWhitespace)
+    return rules.Variable.trim(_)
+      .desc('Return')
   },
   Expression(rules: Rules) {
     return P.seq(
@@ -134,12 +169,13 @@ const Tbox = P.createLanguage({
       P.string('|'),
       rules.Return
     )
+    .desc('Expression')
   }
 })
 
 export class Equivalence {
   parse (){
-    console.log(Tbox.Existential.tryParse('NONE $x.has-something($y)'))
+    console.log(Tbox.Filter.tryParse('$x.has-something($y) AND Foo($y)'))
     console.log('---')
   }
 }
