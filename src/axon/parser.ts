@@ -1,14 +1,14 @@
 import { Triple } from "../commons/model.ts";
 import { AxonEntities, AxonRels } from "../commons/constants.ts";
-import { INoteContext } from "../interfaces.ts";
+import { NoteContext } from "../notes/context.ts";
 
 /*
  *  Parser axon frontmatter
  */
 export class AxonLanguage {
-  ctx: INoteContext;
+  ctx: NoteContext;
 
-  constructor(ctx: INoteContext) {
+  constructor(ctx: NoteContext) {
     this.ctx = ctx;
   }
 

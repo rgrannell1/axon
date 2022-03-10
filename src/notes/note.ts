@@ -10,7 +10,6 @@ import { createHash } from "https://deno.land/std/hash/mod.ts";
 import { Triple } from "../commons/model.ts";
 import { INote } from "../interfaces.ts";
 import { NoteContext } from "./context.ts";
-import { INoteContext } from "../interfaces.ts";
 
 /*
  * BlockId
@@ -72,7 +71,7 @@ export class Note implements INote {
     return Deno.readTextFile(this.fpath);
   }
 
-  lex(content: string, ctx: INoteContext) {
+  lex(content: string) {
     const lex = BlockLexer.lex(content);
     const tokens = lex.tokens.map((token: Record<string, any>) => {
       const blockToken = BlockId.parse(token.text);
@@ -223,7 +222,7 @@ export class Note implements INote {
     // if the file is unchanged, yield previous triples
 
     try {
-      var { frontmatter, tokens } = this.lex(this.content ?? "", ctx);
+      var { frontmatter, tokens } = this.lex(this.content ?? "");
       var noteFacts = this.textTriples(this.parseText(tokens, ctx));
     } catch (err) {
       console.error("file://" + this.fpath);

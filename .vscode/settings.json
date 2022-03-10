@@ -1,17 +1,17 @@
 {
   "workbench.colorCustomizations": {
-    "sash.hoverBorder": "#fbed80",
-    "statusBar.background": "#f9e64f",
+    "sash.hoverBorder": "#fae967",
+    "statusBar.background": "#f8e236",
     "statusBar.foreground": "#15202b",
-    "statusBarItem.hoverBackground": "#f7df1e",
-    "statusBarItem.remoteBackground": "#f9e64f",
+    "statusBarItem.hoverBackground": "#f3d808",
+    "statusBarItem.remoteBackground": "#f8e236",
     "statusBarItem.remoteForeground": "#15202b",
-    "titleBar.activeBackground": "#f9e64f",
+    "titleBar.activeBackground": "#f8e236",
     "titleBar.activeForeground": "#15202b",
-    "titleBar.inactiveBackground": "#f9e64f99",
+    "titleBar.inactiveBackground": "#f8e23699",
     "titleBar.inactiveForeground": "#15202b99"
   },
-  "peacock.color": "#f9e64f",
+  "peacock.color": "#f8e236",
   "deno.enable": true, // enables extension
   "deno.lint": true, // inline deno lint diagnostics, requires `deno.unstable`
   "deno.unstable": true // also provides unstable type declarations in VS Code

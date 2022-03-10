@@ -1,24 +1,19 @@
-import { Triple } from "../commons/model.ts";
-import { Config } from "../config/config.ts";
-import { IBackend, IExporter, INote, IVaultCache } from "../interfaces.ts";
+
+import { IBackend, IExporter, INote } from "../interfaces.ts";
 import { Vault } from "../notes/vault.ts";
-import { Subsumptions } from "./logic.ts";
 import { FolderCache } from "../cache/folder_cache.ts";
+import { State } from "../state.ts";
 
 export class Backend implements IBackend {
   dpath: string;
-  subsumptions: Subsumptions;
 
-  cfg?: Config;
+  state: State = new State(new FolderCache('/home/rg/Code/deno-axon/.cache'));
   plugins: Record<string, any> = {};
-  cache: IVaultCache;
   vault: Vault;
 
   constructor(dpath: string) {
-    this.vault = new Vault(dpath);
     this.dpath = dpath;
-    this.subsumptions = new Subsumptions();
-    this.cache = new FolderCache("/home/rg/Code/deno-axon/.cache");
+    this.vault = new Vault(dpath);
   }
 
   async loadPlugins(fpaths: string[]): Promise<Record<string, any>> {
@@ -32,26 +27,25 @@ export class Backend implements IBackend {
     return custom;
   }
 
-  async *noteTriples(note: INote) {
+  async *processTriples(note: INote) {
     await note.load();
-    const hash = note.hash as string;
+    const ctx = note.context()
 
-    // attempt to load cached triples & subsumptions
-    const cachedTriples = await this.cache.storedTriples(note.fpath, hash);
-    if (cachedTriples) {
-      for (const triple of cachedTriples) {
-        yield triple;
-      }
+    let isCached = false;
 
-      return;
+    for await (const triple of this.state.getTriples(ctx)) {
+      isCached = true;
+      yield triple
     }
 
-    // not cached, compute them and store
-    const noteTriples = await note.triples();
-    this.cache.storeTriples(note.fpath, hash, noteTriples);
+    if (isCached) {
+      return
+    }
 
-    this.subsumptions.add(noteTriples);
-    for (const triple of noteTriples) {
+    const triples = await note.triples();
+    await this.state.addTriples(ctx, triples)
+
+    for (const triple of triples) {
       yield triple;
     }
   }
@@ -60,7 +54,7 @@ export class Backend implements IBackend {
     const vault: Vault = new Vault(this.dpath);
 
     for await (const note of vault.listNotes()) {
-      for await (const triple of this.noteTriples(note)) {
+      for await (const triple of this.processTriples(note)) {
         yield triple;
       }
     }
@@ -86,6 +80,6 @@ export class Backend implements IBackend {
 
   async export(exporter: IExporter) {
     await exporter.init();
-    await exporter.export(this.subsumptions, this.triples());
+    await exporter.export(this.state.subsumptions, this.triples());
   }
 }

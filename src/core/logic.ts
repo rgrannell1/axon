@@ -3,17 +3,17 @@ import { Triple } from "../commons/model.ts";
 
 export class Subsumptions {
   graph: Record<string, Set<string>>;
-  concepts: Set<string> = new Set();
+  conceptNames: Set<string> = new Set();
 
   constructor() {
     this.graph = {};
   }
 
-  classes(instance: string) {
+  concepts(instance: string) {
     const visited = new Set<string>();
     const queue = [instance];
 
-    const classes = new Set<string>();
+    const concepts = new Set<string>();
 
     while (queue.length > 0) {
       let curr = queue.pop();
@@ -23,7 +23,7 @@ export class Subsumptions {
       }
 
       if (curr !== instance) {
-        classes.add(curr);
+        concepts.add(curr);
       }
 
       const neighbours = this.graph.hasOwnProperty(curr)
@@ -37,9 +37,9 @@ export class Subsumptions {
       }
     }
 
-    classes.add(AxonEntities.TOP_TYPE);
+    concepts.add(AxonEntities.TOP_TYPE);
 
-    return classes;
+    return concepts;
   }
 
   add(triples: Triple[]) {
@@ -50,7 +50,7 @@ export class Subsumptions {
         continue;
       }
 
-      this.concepts.add(tgt);
+      this.conceptNames.add(tgt);
 
       if (this.graph.hasOwnProperty(src)) {
         this.graph[src].add(tgt);

@@ -1,5 +1,6 @@
 import { Triple } from "./commons/model.ts";
 import { Subsumptions } from "./core/logic.ts";
+import { NoteContext } from "./notes/context.ts";
 
 export interface IImportState {
 }
@@ -8,7 +9,6 @@ export interface IImportState {
 export interface IImporter {
   init(): Promise<void>;
   sync(): Promise<void>;
-  files();
 }
 
 // A thing that can export subsumptions and triples
@@ -22,15 +22,9 @@ export interface IExporter {
 
 // A cache that stores triples and subsumptions
 export interface IVaultCache {
-  cached(fpath: string, hash: string): Promise<boolean>;
-  storedTriples(fpath: string, hash: string): Promise<Triple[] | undefined>;
-  storeTriples(fpath: string, hash: string, triples: Triple[]): Promise<void>;
-}
-
-// Note context
-export interface INoteContext {
-  replace(name: string): string;
-  fpath(): string;
+  cached(ctx: NoteContext): Promise<boolean>;
+  storedTriples(ctx: NoteContext): Promise<Triple[] | undefined>;
+  storeTriples(ctx: NoteContext, triples: Triple[]): Promise<void>;
 }
 
 // A Note
@@ -39,7 +33,7 @@ export interface INote {
   hash?: string;
 
   load(): Promise<void>;
-  context(): INoteContext;
+  context(): NoteContext;
   triples(): Promise<Triple[]>;
 }
 

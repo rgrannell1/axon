@@ -1,4 +1,4 @@
-import { INoteContext } from "../interfaces.ts";
+import { NoteContext } from "../notes/context.ts";
 
 export class Triple {
   relname: string;
@@ -11,7 +11,7 @@ export class Triple {
     this.tgt = tgt;
   }
 
-  applyCtx(ctx: INoteContext) {
+  applyCtx(ctx: NoteContext) {
     this.relname = ctx.replace(this.relname);
     this.src = ctx.replace(this.src);
     this.tgt = ctx.replace(this.tgt);

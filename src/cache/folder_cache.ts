@@ -1,13 +1,8 @@
 import { Triple } from "../commons/model.ts";
 import { IVaultCache } from "../interfaces.ts";
-import { createHash } from "https://deno.land/std/hash/mod.ts";
 import { join } from "https://deno.land/std@0.63.0/path/mod.ts";
 import { exists } from "https://deno.land/std/fs/mod.ts";
-
-export type ApplicationState = {
-  triples: Triple[];
-  conceptGraph: Record<string, string>;
-};
+import { NoteContext } from "../notes/context.ts";
 
 export class FolderCache implements IVaultCache {
   dpath: string;
@@ -16,45 +11,31 @@ export class FolderCache implements IVaultCache {
     this.dpath = dpath;
   }
 
-  tgtname(fpath: string, hash: string) {
-    const fname = createHash("sha1").update(fpath).toString();
-    return join(this.dpath, `${fname}_${hash}`);
+  fpath(ctx: NoteContext) {
+    return join(this.dpath, ctx.id());
   }
 
-  async cached(fpath: string, hash: string): Promise<boolean> {
-    const tgtname = this.tgtname(fpath, hash);
-    return await exists(tgtname);
+  async cached(ctx: NoteContext): Promise<boolean> {
+    return await exists(this.fpath(ctx));
   }
 
-  async invalidate(fpath: string, hash: string) {
-    if (await this.cached(fpath, hash)) {
-      await Deno.remove(fpath);
+  async invalidate(ctx: NoteContext) {
+    if (await this.cached(ctx)) {
+      await Deno.remove(this.fpath(ctx));
     }
   }
 
-  async storedTriples(
-    fpath: string,
-    hash: string,
-  ): Promise<Triple[] | undefined> {
-    const tgtname = this.tgtname(fpath, hash);
-
-    if (await this.cached(fpath, hash)) {
+  async storedTriples(ctx: NoteContext): Promise<Triple[] | undefined> {
+    if (await this.cached(ctx)) {
       try {
-        return JSON.parse(await Deno.readTextFile(tgtname));
+        return JSON.parse(await Deno.readTextFile(this.fpath(ctx)));
       } catch (err) {
-        await this.invalidate(fpath, hash);
+        await this.invalidate(ctx);
       }
     }
   }
 
-  async storeTriples(
-    fpath: string,
-    hash: string,
-    triples: Triple[],
-  ): Promise<void> {
-    await Deno.writeTextFile(
-      this.tgtname(fpath, hash),
-      JSON.stringify(triples),
-    );
+  async storeTriples(ctx: NoteContext, triples: Triple[]): Promise<void> {
+    await Deno.writeTextFile(this.fpath(ctx), JSON.stringify(triples));
   }
 }

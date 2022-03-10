@@ -27,8 +27,8 @@ export class Neo4jExporter implements IExporter {
     }
 
     for (const triple of triples) {
-      const src: string[] = Array.from(subsumptions.classes(triple.src));
-      const tgt: string[] = Array.from(subsumptions.classes(triple.tgt));
+      const src: string[] = Array.from(subsumptions.concepts(triple.src));
+      const tgt: string[] = Array.from(subsumptions.concepts(triple.tgt));
 
       await this.db.labelTriple(session, triple, src, tgt);
     }

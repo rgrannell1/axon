@@ -31,13 +31,10 @@ export class Neo4jDB {
       return;
     }
 
-    const name = triple.relname.replace("-", "_");
+    const name = triple.relname.replace(/\-/g, "_");
 
     if (name === "id") {
-      await session.run(
-        `
-    merge (src {name: $srcname})
-    `,
+      await session.run(`merge (src {name: $srcname})`,
         {
           srcname: triple.src,
         },
