@@ -3,6 +3,7 @@ Usage:
   axon search --dpath <dir> (--plugin <fpath> ...) [--json|--csv]
   axon export neo4j --dpath <dir>
   axon export sqlite
+  axon new-file --dpath <dir> <name>
   axon (-h|--help)
 
 Description:
@@ -10,6 +11,11 @@ Description:
 
 Commands
   search              retrieve search-results from Axon
+  export              output
+  new file
+
+Arguments:
+  <name>              File name
 
 Options:
   --name              The name of the search to run. The search is defined in a loaded plugin.

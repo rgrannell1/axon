@@ -12,8 +12,10 @@ export class Backend implements IBackend {
   cfg?: Config;
   plugins: Record<string, any> = {};
   cache: IVaultCache;
+  vault: Vault
 
   constructor(dpath: string) {
+    this.vault = new Vault(dpath)
     this.dpath = dpath;
     this.subsumptions = new Subsumptions();
     this.cache = new FolderCache("/home/rg/Code/deno-axon/.cache");
@@ -66,6 +68,10 @@ export class Backend implements IBackend {
 
   async init(plugins: string[]) {
     this.plugins = await this.loadPlugins(plugins);
+  }
+
+  async newFile(name: string) {
+    return this.vault.newFile(name)
   }
 
   async search(name: string) {

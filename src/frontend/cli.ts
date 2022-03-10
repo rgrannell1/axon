@@ -43,6 +43,8 @@ type Args = {
   json: boolean;
   neo4j: boolean;
   sqlite: boolean;
+  name?: string;
+  newFile: boolean;
 };
 
 export class CLI {
@@ -62,6 +64,8 @@ export class CLI {
       json: args["--json"],
       neo4j: args["neo4j"],
       sqlite: args["sqlite"],
+      name: args['<name>'],
+      newFile: args['new-file']
     };
   }
 
@@ -70,6 +74,12 @@ export class CLI {
       backend.export(new Neo4jExporter());
     }
     if (args.sqlite) {
+    }
+  }
+
+  static async newFile(backend: Backend, args: any): Promise<void> {
+    if (args.newFile) {
+      await backend.newFile(args.name)
     }
   }
 
@@ -100,6 +110,8 @@ export class CLI {
       await this.search(backend, args);
     } else if (args.export) {
       await this.export(backend, args);
+    } else if (args.newFile) {
+      await this.newFile(backend, args);
     }
   }
 }

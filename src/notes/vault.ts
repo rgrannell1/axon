@@ -1,11 +1,27 @@
 import { INote } from "../interfaces.ts";
 import { Note } from "./note.ts";
+import { join } from "https://deno.land/std@0.63.0/path/mod.ts";
 
 export class Vault {
   dpath: string;
 
   constructor(dpath: string) {
     this.dpath = dpath;
+  }
+
+  getPrefix () {
+    let date = new Date()
+    const year = date.getFullYear()
+    const month = date.getMonth().toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    const ms = date.getMilliseconds().toString().padStart(4, '0')
+
+    return `${year}${month}${day}${ms} - `
+  }
+
+  async newFile(name: string) {
+    const fpath = join(this.dpath, `${this.getPrefix()}${name}.md`)
+    return Deno.writeTextFile(fpath, `---\n\n---\n#${name}`)
   }
 
   async *listNotes(): AsyncGenerator<INote, void, unknown> {
