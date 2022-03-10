@@ -9,19 +9,32 @@ export class Vault {
     this.dpath = dpath;
   }
 
-  getPrefix () {
-    let date = new Date()
-    const year = date.getFullYear()
-    const month = date.getMonth().toString().padStart(2, '0')
-    const day = date.getDate().toString().padStart(2, '0')
-    const ms = date.getMilliseconds().toString().padStart(4, '0')
+  getPrefix() {
+    let date = new Date();
+    const year = date.getFullYear();
+    const month = date.getMonth().toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const ms = date.getMilliseconds().toString().padStart(4, "0");
 
-    return `${year}${month}${day}${ms} - `
+    return `${year}${month}${day}${ms} - `;
   }
 
   async newFile(name: string) {
-    const fpath = join(this.dpath, `${this.getPrefix()}${name}.md`)
-    return Deno.writeTextFile(fpath, `---\n\n---\n#${name}`)
+    const fpath = join(this.dpath, `${this.getPrefix()}${name}.md`);
+    await Deno.writeTextFile(
+      fpath,
+      [
+        "---",
+        "- id: $filepath",
+        `  describes: "${name}"`,
+        "",
+        `- id: "${name}"`,
+        "---",
+        "",
+        `# ${name}`,
+      ].join("\n"),
+    );
+    return fpath;
   }
 
   async *listNotes(): AsyncGenerator<INote, void, unknown> {

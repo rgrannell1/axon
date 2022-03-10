@@ -64,8 +64,8 @@ export class CLI {
       json: args["--json"],
       neo4j: args["neo4j"],
       sqlite: args["sqlite"],
-      name: args['<name>'],
-      newFile: args['new-file']
+      name: args["<name>"],
+      newFile: args["new-file"],
     };
   }
 
@@ -79,7 +79,7 @@ export class CLI {
 
   static async newFile(backend: Backend, args: any): Promise<void> {
     if (args.newFile) {
-      await backend.newFile(args.name)
+      await backend.newFile(args.name);
     }
   }
 
@@ -97,7 +97,7 @@ export class CLI {
     await backend.init(args.plugins);
 
     const reporter = new Reporter(fmt);
-    await reporter.report(await backend.search("All"));
+    await reporter.report(await backend.search(args.name));
   }
 
   static async start(): Promise<void> {

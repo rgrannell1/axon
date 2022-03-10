@@ -1,6 +1,7 @@
 export const AXON_CLI = `
 Usage:
-  axon search --dpath <dir> (--plugin <fpath> ...) [--json|--csv]
+  axon search --dpath <dir> (--plugin <fpath> ...) [--json|--csv] <name>
+  axon import <name>
   axon export neo4j --dpath <dir>
   axon export sqlite
   axon new-file --dpath <dir> <name>

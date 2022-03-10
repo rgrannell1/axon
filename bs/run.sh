@@ -12,4 +12,4 @@ deno run \
   index.ts search \
   --dpath ~/Drive/Axon \
   --plugin ~/Code/deno-axon/src/ontology/main.ts \
-  --json
+  --json "$1"

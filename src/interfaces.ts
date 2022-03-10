@@ -1,6 +1,16 @@
 import { Triple } from "./commons/model.ts";
 import { Subsumptions } from "./core/logic.ts";
 
+export interface IImportState {
+}
+
+// Reads in triples from some third-party source.
+export interface IImporter {
+  init(): Promise<void>;
+  sync(): Promise<void>;
+  files();
+}
+
 // A thing that can export subsumptions and triples
 export interface IExporter {
   init(): Promise<void>;
