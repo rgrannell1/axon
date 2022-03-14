@@ -11,4 +11,4 @@ deno run \
   --no-check=remote \
   index.ts search \
   --dpath ~/Drive/Axon \
-  --plugin ~/Code/deno-axon/src/ontology/main.ts "$1"
+  --plugin ~/Code/deno-axon/src/my-searches/main.ts "$1"

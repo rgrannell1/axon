@@ -1,5 +1,5 @@
 import { IBackend, IExporter, INote } from "../interfaces.ts";
-import { FolderCache } from "../cache/folder_cache.ts";
+import { FolderCache } from "../folder_cache.ts";
 import { State } from "../state.ts";
 import { IImporter, ITripleSource } from "../interfaces.ts";
 
@@ -44,7 +44,7 @@ export class Backend implements IBackend {
       throw new Error("No search passed to backend");
     }
 
-    return search(this.state.subsumptions, this.triples(this.state));
+    return search(this.state.subsumptions, () => this.triples(this.state));
   }
 
   async *triples(state: State) {

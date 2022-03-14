@@ -51,16 +51,28 @@ export class Subsumptions {
     for (const triple of triples) {
       const { relname, src, tgt } = triple;
 
-      if (relname !== "is") {
+      if (relname !== "is" && relname !== "includes") {
         continue;
       }
 
-      this.conceptNames.add(tgt);
+      if (relname === "is") {
+        this.conceptNames.add(tgt);
 
-      if (this.graph.hasOwnProperty(src)) {
-        this.graph[src].add(tgt);
-      } else {
-        this.graph[src] = new Set<string>([tgt, AxonEntities.TOP_TYPE]);
+        if (this.graph.hasOwnProperty(src)) {
+          this.graph[src].add(tgt);
+        } else {
+          this.graph[src] = new Set<string>([tgt, AxonEntities.TOP_TYPE]);
+        }
+      }
+
+      if (relname === "includes") {
+        this.conceptNames.add(src);
+
+        if (this.graph.hasOwnProperty(tgt)) {
+          this.graph[tgt].add(src);
+        } else {
+          this.graph[tgt] = new Set<string>([src, AxonEntities.TOP_TYPE]);
+        }
       }
     }
   }

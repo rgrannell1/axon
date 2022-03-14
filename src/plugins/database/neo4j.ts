@@ -37,7 +37,7 @@ export class Neo4jDB {
       await session.run(`merge (src {name: $srcname})`, {
         srcname: triple.src,
       });
-    } else if (name === "is") {
+    } else if (name === "is" || name === "includes") {
       await session.run(`merge (src {name: $srcname})`, {
         srcname: triple.src,
       });
