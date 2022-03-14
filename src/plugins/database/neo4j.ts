@@ -1,5 +1,5 @@
 import * as neo4j from "https://deno.land/x/neo4j_lite_client@4.4.1-preview2/mod.ts";
-import { Triple } from "../commons/model.ts";
+import { Triple } from "../../commons/model.ts";
 
 export class Neo4jDB {
   driver: neo4j.Driver;
@@ -34,11 +34,17 @@ export class Neo4jDB {
     const name = triple.relname.replace(/\-/g, "_");
 
     if (name === "id") {
-      await session.run(`merge (src {name: $srcname})`,
-        {
-          srcname: triple.src,
-        },
-      );
+      await session.run(`merge (src {name: $srcname})`, {
+        srcname: triple.src,
+      });
+    } else if (name === "is") {
+      await session.run(`merge (src {name: $srcname})`, {
+        srcname: triple.src,
+      });
+
+      await session.run(`merge (tgt {name: $tgtname})`, {
+        tgtname: triple.tgt,
+      });
     } else {
       await session.run(
         `
@@ -69,15 +75,23 @@ export class Neo4jDB {
       return;
     }
 
+    const tidyLabel = (src: string) => {
+      return src
+        .replace(/\-/g, "_")
+        .replace(/ /g, "_")
+        .replace(/\:/g, "_")
+        .replace(/\//g, "_");
+    };
+
     await session.run(
       `
     match (x)
       where x.name = $srcname
-      set x:${srcConcepts.join(":")}
+      set x:${srcConcepts.map(tidyLabel).join(":")}
     with x
     match (y)
       where y.name = $tgtname
-      set y:${tgtConcepts.join(":")}
+      set y:${tgtConcepts.map(tidyLabel).join(":")}
     `,
       {
         srcname: triple.src,

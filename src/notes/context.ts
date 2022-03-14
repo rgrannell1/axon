@@ -1,4 +1,9 @@
+/*
+ * Note context provides metadata like filename, hash about a set of triples.
+ */
+
 import { createHash } from "https://deno.land/std/hash/mod.ts";
+import { IIdentifiable } from "../interfaces.ts";
 
 type NoteContextArgs = {
   $filepath: string;
@@ -11,7 +16,7 @@ type NoteContextArgs = {
   * Any special variables that can be injected into
   * opening frontmatter
   */
-export class NoteContext {
+export class NoteContext implements IIdentifiable {
   substitutions: Record<string, string>;
 
   constructor(substitutions: NoteContextArgs) {

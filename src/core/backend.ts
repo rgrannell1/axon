@@ -1,19 +1,21 @@
-
 import { IBackend, IExporter, INote } from "../interfaces.ts";
-import { Vault } from "../notes/vault.ts";
 import { FolderCache } from "../cache/folder_cache.ts";
 import { State } from "../state.ts";
+import { IImporter, ITripleSource } from "../interfaces.ts";
 
+const CACHE_PATH_MOVE_TO_CFG = "/home/rg/Code/deno-axon/.cache";
+
+// remove
 export class Backend implements IBackend {
-  dpath: string;
-
-  state: State = new State(new FolderCache('/home/rg/Code/deno-axon/.cache'));
   plugins: Record<string, any> = {};
-  vault: Vault;
 
-  constructor(dpath: string) {
-    this.dpath = dpath;
-    this.vault = new Vault(dpath);
+  state: State = new State(new FolderCache(CACHE_PATH_MOVE_TO_CFG));
+  sources: ITripleSource[];
+  clients: Record<string, any>;
+
+  constructor(sources: ITripleSource[], clients: Record<string, any>) {
+    this.sources = sources;
+    this.clients = clients;
   }
 
   async loadPlugins(fpaths: string[]): Promise<Record<string, any>> {
@@ -27,45 +29,12 @@ export class Backend implements IBackend {
     return custom;
   }
 
-  async *processTriples(note: INote) {
-    await note.load();
-    const ctx = note.context()
-
-    let isCached = false;
-
-    for await (const triple of this.state.getTriples(ctx)) {
-      isCached = true;
-      yield triple
-    }
-
-    if (isCached) {
-      return
-    }
-
-    const triples = await note.triples();
-    await this.state.addTriples(ctx, triples)
-
-    for (const triple of triples) {
-      yield triple;
-    }
-  }
-
-  async *triples() {
-    const vault: Vault = new Vault(this.dpath);
-
-    for await (const note of vault.listNotes()) {
-      for await (const triple of this.processTriples(note)) {
-        yield triple;
-      }
-    }
-  }
-
   async init(plugins: string[]) {
     this.plugins = await this.loadPlugins(plugins);
-  }
 
-  async newFile(name: string) {
-    console.log(await this.vault.newFile(name));
+    for (const client of Object.values(this.clients)) {
+      await client.init();
+    }
   }
 
   async search(name: string) {
@@ -75,11 +44,35 @@ export class Backend implements IBackend {
       throw new Error("No search passed to backend");
     }
 
-    return search(this.triples());
+    return search(this.state.subsumptions, this.triples(this.state));
+  }
+
+  async *triples(state: State) {
+    for (const source of this.sources) {
+      for await (const triple of source.triples(state)) {
+        yield triple;
+      }
+    }
   }
 
   async export(exporter: IExporter) {
     await exporter.init();
-    await exporter.export(this.state.subsumptions, this.triples());
+    await exporter.export(
+      this.state.subsumptions,
+      this.triples(this.state),
+    );
+  }
+
+  async import(importer: IImporter) {
+    await importer.init();
+    await importer.sync(this.state);
+  }
+
+  async template() {
+    const pinboard = this.clients.pinboard;
+    const vault = this.clients.vault;
+
+    const content = await pinboard.template(this.state);
+    await vault.writeNote(content);
   }
 }

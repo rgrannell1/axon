@@ -2,7 +2,9 @@ import { AXON_CLI } from "../commons/constants.ts";
 import { Backend } from "../core/backend.ts";
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
-import { Neo4jExporter } from "../exporters/neo4j.ts";
+import { Neo4jExporter } from "../plugins/exporters/neo4j.ts";
+import { PinboardPlugin } from "../plugins/plugins/pinboard.ts";
+import { Vault } from "../notes/vault.ts";
 
 export enum FormatOptions {
   JSON,
@@ -23,7 +25,7 @@ export class Reporter {
     } else if (this.format === FormatOptions.CSV) {
       throw new Error("not implemented");
     } else {
-      return (value as any).toString();
+      return (value as any)?.toString();
     }
   }
 
@@ -36,7 +38,9 @@ export class Reporter {
 
 type Args = {
   search: boolean;
+  import: boolean;
   export: boolean;
+  template: string;
   dpath: string;
   plugins: string[];
   csv: boolean;
@@ -57,7 +61,9 @@ export class CLI {
 
     return {
       search: args.search,
+      import: args.import,
       export: args.export,
+      template: args.template,
       dpath: args["--dpath"],
       plugins: args["--plugin"],
       csv: args["--csv"],
@@ -77,10 +83,21 @@ export class CLI {
     }
   }
 
+  static async import(backend: Backend, args: any): Promise<void> {
+    if (args.name === "pinboard") {
+      backend.import(new PinboardPlugin());
+    }
+  }
+
   static async newFile(backend: Backend, args: any): Promise<void> {
     if (args.newFile) {
-      await backend.newFile(args.name);
+      //await backend.vault.newFile(args.name);
+      // todo
     }
+  }
+
+  static async template(backend: Backend, args: any): Promise<void> {
+    backend.template();
   }
 
   static async search(backend: Backend, args: any): Promise<void> {
@@ -103,15 +120,29 @@ export class CLI {
   static async start(): Promise<void> {
     const args = CLI.readArgs();
 
-    const backend = new Backend(args.dpath);
+    const plugins = {
+      pinboard: new PinboardPlugin(),
+      vault: new Vault(args.dpath),
+    };
+
+    const sources = [
+      new Vault(args.dpath),
+      new PinboardPlugin(),
+    ];
+
+    const backend = new Backend(sources, plugins);
     await backend.init(args.plugins);
 
     if (args.search) {
       await this.search(backend, args);
     } else if (args.export) {
       await this.export(backend, args);
+    } else if (args.import) {
+      await this.import(backend, args);
     } else if (args.newFile) {
       await this.newFile(backend, args);
+    } else if (args.template) {
+      await this.template(backend, args);
     }
   }
 }

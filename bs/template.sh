@@ -9,6 +9,5 @@ deno run \
   --allow-net \
   --allow-env \
   --no-check=remote \
-  index.ts search \
-  --dpath ~/Drive/Axon \
-  --plugin ~/Code/deno-axon/src/ontology/main.ts "$1"
+  index.ts template \
+  --dpath ~/Drive/Axon

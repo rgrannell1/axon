@@ -4,7 +4,7 @@ import {
   BlockLexer,
   TokenType,
 } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
-import { AxonLanguage } from "../axon/parser.ts";
+import { AxonLanguage } from "./parser.ts";
 import { AxonEntities } from "../commons/constants.ts";
 import { createHash } from "https://deno.land/std/hash/mod.ts";
 import { Triple } from "../commons/model.ts";
@@ -62,7 +62,7 @@ export class Note implements INote {
     this.fpath = join(dpath, name);
   }
 
-  async load() {
+  async init() {
     this.content = await this.read();
     this.hash = createHash("sha1").update(this.content).toString();
   }
@@ -90,14 +90,7 @@ export class Note implements INote {
   }
 
   fname(): string {
-    const base = basename(this.fpath);
-    const matches = base.match(Note.NAME);
-
-    if (matches) {
-      return matches[1];
-    } else {
-      throw new Error("could not extract basename.");
-    }
+    return basename(this.fpath);
   }
 
   headingFacts(token: Record<string, any>) {
@@ -203,6 +196,10 @@ export class Note implements INote {
     return facts.map((fact) => new Triple(fact[0], fact[1], fact[2]));
   }
 
+  id(): string {
+    return this.context().id();
+  }
+
   context(): NoteContext {
     if (typeof this.hash === "undefined") {
       throw new TypeError("hash was undefined; was load-called?");
@@ -216,7 +213,7 @@ export class Note implements INote {
     });
   }
 
-  async triples(): Promise<Triple[]> {
+  async *triples() {
     const ctx = this.context();
 
     // if the file is unchanged, yield previous triples
@@ -232,6 +229,8 @@ export class Note implements INote {
     const lang = new AxonLanguage(ctx);
     const frontmatterFacts = lang.parse(frontmatter);
 
-    return frontmatterFacts.concat(noteFacts);
+    for (const triple of frontmatterFacts.concat(noteFacts)) {
+      yield triple;
+    }
   }
 }

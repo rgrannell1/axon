@@ -2,7 +2,6 @@ import { Triple } from "../commons/model.ts";
 import { IVaultCache } from "../interfaces.ts";
 import { join } from "https://deno.land/std@0.63.0/path/mod.ts";
 import { exists } from "https://deno.land/std/fs/mod.ts";
-import { NoteContext } from "../notes/context.ts";
 
 export class FolderCache implements IVaultCache {
   dpath: string;
@@ -11,31 +10,39 @@ export class FolderCache implements IVaultCache {
     this.dpath = dpath;
   }
 
-  fpath(ctx: NoteContext) {
-    return join(this.dpath, ctx.id());
+  fpath(id: string) {
+    return join(this.dpath, id);
   }
 
-  async cached(ctx: NoteContext): Promise<boolean> {
-    return await exists(this.fpath(ctx));
+  async cached(id: string): Promise<boolean> {
+    return await exists(this.fpath(id));
   }
 
-  async invalidate(ctx: NoteContext) {
-    if (await this.cached(ctx)) {
-      await Deno.remove(this.fpath(ctx));
+  async invalidate(id: string) {
+    console.log("invalidating cache");
+    if (await this.cached(id)) {
+      await Deno.remove(this.fpath(id));
     }
   }
 
-  async storedTriples(ctx: NoteContext): Promise<Triple[] | undefined> {
-    if (await this.cached(ctx)) {
+  async *storedTriples(id: string): AsyncGenerator<Triple, any, unknown> {
+    if (await this.cached(id)) {
       try {
-        return JSON.parse(await Deno.readTextFile(this.fpath(ctx)));
+        for await (
+          const triple of JSON.parse(await Deno.readTextFile(this.fpath(id)))
+        ) {
+          yield triple;
+        }
       } catch (err) {
-        await this.invalidate(ctx);
+        await this.invalidate(id);
       }
     }
   }
 
-  async storeTriples(ctx: NoteContext, triples: Triple[]): Promise<void> {
-    await Deno.writeTextFile(this.fpath(ctx), JSON.stringify(triples));
+  async storeTriples(id: string, triples: Triple[]): Promise<void> {
+    if (triples.length === 0) {
+      throw new Error("attempting to store no triples in context.");
+    }
+    await Deno.writeTextFile(this.fpath(id), JSON.stringify(triples));
   }
 }

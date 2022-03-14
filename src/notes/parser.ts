@@ -21,9 +21,9 @@ export class AxonLanguage {
     }
 
     for (const rels of data) {
-      const id = rels.id;
+      const id = rels?.id;
       if (!id) {
-        throw new Error("id missing from entity");
+        throw new Error(`id missing from entity in ${this.ctx.fpath()}: ${rels}`);
       }
       const entname = id;
 

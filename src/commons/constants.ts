@@ -1,10 +1,12 @@
 export const AXON_CLI = `
 Usage:
   axon search --dpath <dir> (--plugin <fpath> ...) [--json|--csv] <name>
-  axon import <name>
+  axon import --dpath <dir> <name>
   axon export neo4j --dpath <dir>
   axon export sqlite
+  axon template --dpath <dir>
   axon new-file --dpath <dir> <name>
+
   axon (-h|--help)
 
 Description:

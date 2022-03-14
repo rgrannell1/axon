@@ -1,4 +1,8 @@
 {
+  "peacock.color": "#f8e236",
+  "deno.enable": true, // enables extension
+  "deno.lint": true, // inline deno lint diagnostics, requires `deno.unstable`
+  "deno.unstable": true,
   "workbench.colorCustomizations": {
     "sash.hoverBorder": "#fae967",
     "statusBar.background": "#f8e236",
@@ -10,9 +14,5 @@
     "titleBar.activeForeground": "#15202b",
     "titleBar.inactiveBackground": "#f8e23699",
     "titleBar.inactiveForeground": "#15202b99"
-  },
-  "peacock.color": "#f8e236",
-  "deno.enable": true, // enables extension
-  "deno.lint": true, // inline deno lint diagnostics, requires `deno.unstable`
-  "deno.unstable": true // also provides unstable type declarations in VS Code
+  } // also provides unstable type declarations in VS Code
 }

@@ -14,12 +14,17 @@ export class Subsumptions {
     const queue = [instance];
 
     const concepts = new Set<string>();
+    const start = Date.now()
 
     while (queue.length > 0) {
       let curr = queue.pop();
 
       if (!curr || visited.has(curr)) {
         continue;
+      }
+
+      if ((Date.now() - start) > 2_000) {
+        console.log(curr)
       }
 
       if (curr !== instance) {

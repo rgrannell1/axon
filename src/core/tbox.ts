@@ -82,7 +82,7 @@ const Tbox = P.createLanguage({
     return P.seq(
       rules.Name,
       P.string("("),
-      rules.ConceptArgument.trim(_),
+      rules.ConceptArgument,
       P.string(")"),
     )
       .map((result: string[]) => {
@@ -91,7 +91,7 @@ const Tbox = P.createLanguage({
       .desc("Concept");
   },
   RoleArgument(rules: Rules) {
-    return P.alt(rules.Variable, rules.Name)
+    return P.alt(rules.Concept, rules.Variable, rules.Name)
       .desc("RoleArgument");
   },
   Role(rules: Rules) {
@@ -109,7 +109,7 @@ const Tbox = P.createLanguage({
       .desc("Role");
   },
   Declaration(rules: Rules) {
-    return rules.Variable.trim(_)
+    return rules.Variable
       .many()
       .desc("Declaration");
   },
@@ -121,44 +121,23 @@ const Tbox = P.createLanguage({
       .map((match: string) => new ConjunctionOperator(match))
       .desc("ConjunctionOperator");
   },
-  Conjunction(rules: Rules) {
-    return P.seq(
-      rules.ConjunctionOperator.trim(_),
-      rules.Filter.trim(_),
-    )
-      .desc("Conjunction");
-  },
   Filter(rules: Rules) {
-    return P.alt(
-      rules.Existential.trim(_),
-      rules.Role.trim(_),
-      rules.Concept.trim(_),
-      rules.ParenFilter.trim(_),
-      rules.Conjunction.trim(_),
-    ).desc("Filter");
+    return P.seq(
+      rules.ExistentialOperator.times(0, 1),
+      _,
+      P.alt(rules.Role, rules.Concept),
+      _,
+      P.seq(rules.ConjunctionOperator, rules.Filter).many(),
+    )
+      .wrap(P.string("("), P.string(")"));
   },
   ExistentialOperator() {
     return P.alt(P.string("NONE"), P.string("SOME"), P.string("ALL"))
       .map((match: string) => new ExistentialOperator(match))
       .desc("ExistentialOperator");
   },
-  Existential(rules: Rules) {
-    return P.seq(
-      rules.ExistentialOperator.trim(_),
-      rules.Filter.trim(_).many(),
-    ).desc("Existential");
-  },
-  ParenFilter(rules: Rules) {
-    return P.seq(
-      P.string("("),
-      rules.Filter.trim(_),
-      P.string(")"),
-    )
-      .map((match: any[]) => new Group(match[1]))
-      .desc("ParenFilter");
-  },
   Return(rules: Rules) {
-    return rules.Variable.trim(_)
+    return rules.Variable
       .desc("Return");
   },
   Expression(rules: Rules) {
@@ -175,7 +154,11 @@ const Tbox = P.createLanguage({
 
 export class Equivalence {
   parse() {
-    console.log(Tbox.Filter.tryParse("$x.has-something($y) AND Foo($y)"));
+    Tbox.Concept.tryParse("PrivateInformation($x)");
+    Tbox.Role.tryParse("$x.adjacent($y)");
+    //Tbox.Role.tryParse("$x.adjacent(PrivateInformation($y))");
+
+    //console.log(Tbox.Filter.tryParse("(NOT    $x.adjacent(PrivateInformation($y))) AND NOT PrivateInformation($x)"));
     console.log("---");
   }
 }

@@ -6,15 +6,21 @@
   "configurations": [
     {
       "request": "launch",
-      "name": "Launch test",
+      "name": "Launch Debugger",
       "type": "pwa-node",
-      "program": "${workspaceFolder}/axon-lang/parser.test.ts",
+      "program": "${workspaceFolder}/index.ts",
       "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "deno",
+      "runtimeExecutable": "/snap/bin/deno",
       "runtimeArgs": [
         "run",
-        "--inspect",
-        "--allow-all"
+        "--unstable",
+        "--inspect-brk=127.0.0.1:9229",
+        "--allow-all",
+        "index.ts",
+        "export",
+        "neo4j",
+        "--dpath",
+        "/home/rg/Drive/Axon"
       ],
       "attachSimplePort": 9229
     }

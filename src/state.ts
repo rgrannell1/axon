@@ -1,41 +1,64 @@
 import { Triple } from "./commons/model.ts";
 import { Subsumptions } from "./core/logic.ts";
-import { IVaultCache } from "./interfaces.ts";
-import { NoteContext } from "./notes/context.ts";
+import { INoteSource, IVaultCache } from "./interfaces.ts";
 
-export class Associations {
-  context: NoteContext;
-  triples: Triple[];
-
-  constructor(ctx: NoteContext, triples: Triple[]) {
-    this.context = ctx;
-    this.triples = triples;
-  }
-}
-
+/*
+ * Stored application-state.
+ *
+ */
 export class State {
   cache: IVaultCache;
-  associations: Associations[];
-  subsumptions: Subsumptions
+  subsumptions: Subsumptions;
 
   constructor(cache: IVaultCache) {
     this.cache = cache;
-    this.associations = [];
-    this.subsumptions = new Subsumptions()
+    this.subsumptions = new Subsumptions();
   }
 
-  async *getTriples(ctx: NoteContext) {
-    const cachedTriples = await this.cache.storedTriples(ctx);
+  async hasTriples(id: string) {
+    return await this.cache.cached(id);
+  }
 
-    if (cachedTriples) {
-      for (const triple of cachedTriples) {
+  async *getTriples(id: string) {
+    if (await this.cache.cached(id)) {
+      for await (const triple of this.cache.storedTriples(id)) {
+        this.subsumptions.add([triple]);
         yield triple;
       }
     }
   }
 
-  async addTriples(ctx: NoteContext, triples: Triple[]) {
+  async addTriples(id: string, triples: Triple[]) {
     this.subsumptions.add(triples);
-    await this.cache.storeTriples(ctx, triples);
+    await this.cache.storeTriples(id, triples);
+  }
+
+  async *getCtxNotes(src: INoteSource) {
+    await src.init();
+    const id = src.id();
+
+    let isCached = false;
+
+    for await (const triple of this.getTriples(id)) {
+      isCached = true;
+      yield triple;
+    }
+
+    if (isCached) {
+      return;
+    }
+
+    let triplesArray: Triple[] = [];
+
+    for await (const triple of src.triples(this)) {
+      triplesArray.push(triple);
+    }
+    this.subsumptions.add(triplesArray);
+
+    await this.addTriples(id, triplesArray);
+
+    for (const triple of triplesArray) {
+      yield triple;
+    }
   }
 }
