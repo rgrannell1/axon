@@ -3,7 +3,7 @@
  */
 
 import { createHash } from "https://deno.land/std/hash/mod.ts";
-import { IIdentifiable } from "../interfaces.ts";
+import { IIdentifiable, IContext } from "../interfaces.ts";
 
 type NoteContextArgs = {
   $filepath: string;
@@ -16,7 +16,7 @@ type NoteContextArgs = {
   * Any special variables that can be injected into
   * opening frontmatter
   */
-export class NoteContext implements IIdentifiable {
+export class NoteContext implements IIdentifiable, IContext {
   substitutions: Record<string, string>;
 
   constructor(substitutions: NoteContextArgs) {

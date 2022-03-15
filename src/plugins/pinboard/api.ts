@@ -1,5 +1,8 @@
-import { Triple } from "../../commons/model.ts";
-import { ITripleSource } from "../../interfaces.ts";
+
+import {
+  Interfaces,
+  Triple
+} from '../../../lib.ts'
 
 export type BookmarkFields = {
   description: string;
@@ -18,7 +21,7 @@ export enum PinboardEntities {
   BOOKMARK_DATE = "Pinboard_Bookmark_Date",
 }
 
-export class PinboardBookmark implements ITripleSource {
+export class PinboardBookmark implements Interfaces.ITripleSource {
   data: BookmarkFields;
 
   constructor(data: BookmarkFields) {

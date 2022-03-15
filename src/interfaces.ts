@@ -3,6 +3,14 @@ import { Subsumptions } from "./core/logic.ts";
 import { NoteContext } from "./notes/context.ts";
 import { State } from "./state.ts";
 
+export type Search = (subsumptions: Subsumptions, triple: Triple) => boolean;
+export type SubSearch = (part: string) => boolean;
+export type TripleStream = AsyncGenerator<Triple, any, unknown>;
+
+export interface IContext {
+  replace(name: string): string
+}
+
 /*
  * Gives a context id (like filename_filehash) that can be associated with
  * a set of triples. Used to cache triples
@@ -23,14 +31,14 @@ export interface IExporter {
   init(): Promise<void>;
   export(
     subsumptions: Subsumptions,
-    triples: AsyncGenerator<Triple, void, any>,
+    triples: () => TripleStream,
   ): Promise<void>;
 }
 
 // A cache that stores triples and subsumptions
-export interface IVaultCache {
+export interface ICache {
   cached(id: string): Promise<boolean>;
-  storedTriples(id: string): AsyncGenerator<Triple, void, any>;
+  storedTriples(id: string): TripleStream;
   storeTriples(id: string, triples: Triple[]): Promise<void>;
 }
 
@@ -70,7 +78,7 @@ export interface IPlugin {
 }
 
 export interface ITripleSource {
-  triples(state: State): AsyncGenerator<Triple, void, any>;
+  triples(state: State): TripleStream;
 }
 
 export interface ITemplate {

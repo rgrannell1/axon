@@ -1,16 +1,16 @@
 import { Triple } from "./commons/model.ts";
 import { Subsumptions } from "./core/logic.ts";
-import { INoteSource, IVaultCache } from "./interfaces.ts";
+import { INoteSource, ICache } from "./interfaces.ts";
 
 /*
- * Stored application-state.
+ * Access (or update) stored application state
  *
  */
 export class State {
-  cache: IVaultCache;
+  cache: ICache;
   subsumptions: Subsumptions;
 
-  constructor(cache: IVaultCache) {
+  constructor(cache: ICache) {
     this.cache = cache;
     this.subsumptions = new Subsumptions();
   }

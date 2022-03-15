@@ -1,9 +1,20 @@
-import { Triple } from "../../commons/model.ts";
-import { Subsumptions } from "../../core/logic.ts";
-import { Neo4jDB } from "../database/neo4j.ts";
-import { IExporter } from "../../interfaces.ts";
 
-export class Neo4jExporter implements IExporter {
+import {
+  Interfaces,
+  Triple,
+  Logic
+} from '../../../lib.ts'
+import { Neo4jDB } from "./db.ts";
+
+
+/**
+ * Export knowledge-base to Neo4j.
+ *
+ * @export
+ * @class Neo4jExporter
+ * @implements {Interfaces.IExporter}
+ */
+export class Neo4jExporter implements Interfaces.IExporter {
   db: Neo4jDB;
 
   constructor() {
@@ -15,7 +26,16 @@ export class Neo4jExporter implements IExporter {
   }
   async init() {
   }
-  async export(subsumptions: Subsumptions, $triples: any) {
+
+
+  /**
+   * Export stored knowledge-base to Neo4j
+   *
+   * @param {Logic.Subsumptions} subsumptions information about class-subsumptions
+   * @param {Interfaces.TripleStream} triples
+   * @memberof Neo4jExporter
+   */
+  async export(subsumptions: Logic.Subsumptions, triples: () => Interfaces.TripleStream) {
     const session = this.db.driver.session();
 
     console.log("export | clearing database");
@@ -24,16 +44,16 @@ export class Neo4jExporter implements IExporter {
 
     console.log("export | adding triples");
 
-    const triples = [];
-    for await (const triple of $triples) {
-      triples.push(triple);
+    let tripleCount = 0
+    for await (const triple of triples()) {
       await this.db.addTriple(session, triple);
+      tripleCount++
     }
 
     console.log("export | adding labels");
     let idx = 0
-    for (const triple of triples) {
-      console.log(idx, triples.length)
+    for await (const triple of triples()) {
+      console.log(idx, tripleCount)
       idx++
       const src: string[] = Array.from(subsumptions.concepts(triple.src));
       const tgt: string[] = Array.from(subsumptions.concepts(triple.tgt));

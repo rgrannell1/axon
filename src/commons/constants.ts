@@ -1,32 +1,3 @@
-export const AXON_CLI = `
-Usage:
-  axon search --dpath <dir> (--plugin <fpath> ...) [--json|--csv] <name>
-  axon import --dpath <dir> <name>
-  axon export neo4j --dpath <dir>
-  axon export sqlite
-  axon template --dpath <dir>
-  axon new-file --dpath <dir> <name>
-
-  axon (-h|--help)
-
-Description:
-  Axon CLI
-
-Commands
-  search              retrieve search-results from Axon
-  export              output
-  new file
-
-Arguments:
-  <name>              File name
-
-Options:
-  --name              The name of the search to run. The search is defined in a loaded plugin.
-  --json              Display output as JSON.
-  --csv               Display output as CSV.
-  --dpath <dir>       Axon note directory.
-  --plugin <fpath>    A CSV of Typescript plugins for Axon.
-`;
 
 export enum AxonRels {
   IS = "is",

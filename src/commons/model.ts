@@ -1,5 +1,11 @@
-import { NoteContext } from "../notes/context.ts";
+import { IContext } from "../interfaces.ts"
 
+/**
+ * A data-triple, containing a src, relationship, and target. The core unit of data in Axon.
+ *
+ * @export
+ * @class Triple
+ */
 export class Triple {
   relname: string;
   src: string;
@@ -11,7 +17,15 @@ export class Triple {
     this.tgt = tgt;
   }
 
-  applyCtx(ctx: NoteContext) {
+
+  /**
+   * Apply note-context to a triple, replacing contextual values
+   *
+   * @param {IContext} ctx a context containing bindings for contextual variables
+   * @return {Triple}
+   * @memberof Triple
+   */
+  applyCtx(ctx: IContext):Triple {
     this.relname = ctx.replace(this.relname);
     this.src = ctx.replace(this.src);
     this.tgt = ctx.replace(this.tgt);

@@ -7,9 +7,8 @@ import {
   PinboardBookmark,
   PinboardClient,
   PinboardEntities,
-} from "../api/pinboard.ts";
-import { Subsumptions } from "../../core/logic.ts";
-import { Fetchers, Parts } from "../../search/search.ts";
+} from "./api.ts";
+import { Logic } from "../../../lib.ts";
 import { render } from "https://deno.land/x/mustache_ts@v0.4.1.1/mustache.ts";
 
 // The template to create a file
@@ -38,12 +37,12 @@ const PINBOARD_TEMPLATE = `
 `;
 
 const fromTriples = async function* (
-  subsumptions: Subsumptions,
+  subsumptions: Logic.Subsumptions,
   triples: AsyncGenerator<Triple, void, any>,
 ) {
   const bookmarks: Record<string, BookmarkFields> = {};
 
-  for await (const triple of Fetchers.All(Parts.True)(subsumptions, triples)) {
+    for await (const triple of triples) {
     const srcConcepts = subsumptions.concepts(triple.src);
     const tgtConcepts = subsumptions.concepts(triple.tgt);
 
@@ -129,7 +128,7 @@ export class PinboardPlugin implements IImporter, ITripleSource {
   }
 
   async *fromTriples(
-    subsumptions: Subsumptions,
+    subsumptions: Logic.Subsumptions,
     triples: AsyncGenerator<Triple, void, any>,
   ): AsyncGenerator<PinboardBookmark, any, unknown> {
     for await (const bookmark of fromTriples(subsumptions, triples)) {

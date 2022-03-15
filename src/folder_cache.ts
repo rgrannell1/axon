@@ -1,9 +1,9 @@
 import { Triple } from "./commons/model.ts";
-import { IVaultCache } from "./interfaces.ts";
+import { ICache } from "./interfaces.ts";
 import { join } from "https://deno.land/std@0.63.0/path/mod.ts";
 import { exists } from "https://deno.land/std/fs/mod.ts";
 
-export class FolderCache implements IVaultCache {
+export class FolderCache implements ICache {
   dpath: string;
 
   constructor(dpath: string) {

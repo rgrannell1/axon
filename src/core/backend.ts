@@ -5,7 +5,27 @@ import { IImporter, ITripleSource } from "../interfaces.ts";
 
 const CACHE_PATH_MOVE_TO_CFG = "/home/rg/Code/deno-axon/.cache";
 
-// remove
+export class Plugins {
+  fpaths: string[]
+  scope: Record<string, any> = {}
+
+  constructor(fpaths: string[]) {
+    this.fpaths = fpaths
+  }
+
+  async init() {
+    let custom = {};
+    for (
+      const exportList of await Promise.all(this.fpaths.map((fpath) => import(fpath)))
+    ) {
+      custom = { ...exportList };
+    }
+
+    this.scope = {...custom};
+  }
+}
+
+
 export class Backend implements IBackend {
   plugins: Record<string, any> = {};
 
@@ -13,24 +33,14 @@ export class Backend implements IBackend {
   sources: ITripleSource[];
   clients: Record<string, any>;
 
-  constructor(sources: ITripleSource[], clients: Record<string, any>) {
+  constructor(sources: ITripleSource[], clients: Record<string, any>, plugins: string[]) {
     this.sources = sources;
     this.clients = clients;
+    this.plugins = new Plugins(plugins)
   }
 
-  async loadPlugins(fpaths: string[]): Promise<Record<string, any>> {
-    let custom = {};
-    for (
-      const exports of await Promise.all(fpaths.map((fpath) => import(fpath)))
-    ) {
-      custom = { ...exports };
-    }
-
-    return custom;
-  }
-
-  async init(plugins: string[]) {
-    this.plugins = await this.loadPlugins(plugins);
+  async init() {
+    await this.plugins.init();
 
     for (const client of Object.values(this.clients)) {
       await client.init();
@@ -38,7 +48,7 @@ export class Backend implements IBackend {
   }
 
   async search(name: string) {
-    const search = this.plugins[name];
+    const search = this.plugins.scope[name];
 
     if (!search) {
       throw new Error("No search passed to backend");
@@ -59,7 +69,7 @@ export class Backend implements IBackend {
     await exporter.init();
     await exporter.export(
       this.state.subsumptions,
-      this.triples(this.state),
+      () => this.triples(this.state),
     );
   }
 
@@ -68,11 +78,12 @@ export class Backend implements IBackend {
     await importer.sync(this.state);
   }
 
+  // TODO REMOVE TEST CODE
   async template() {
     const pinboard = this.clients.pinboard;
     const vault = this.clients.vault;
 
     const content = await pinboard.template(this.state);
-    await vault.writeNote(content);
+    await vault.writeNote('Pinboard Bookmarks.md', content);
   }
 }

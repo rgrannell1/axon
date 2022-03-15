@@ -14,26 +14,8 @@ export class Vault implements ITripleSource {
 
   async init() {}
 
-  async newFile(name: string) {
-    const fpath = join(this.dpath, `${name}.md`);
-    await Deno.writeTextFile(
-      fpath,
-      [
-        "---",
-        "- id: $filepath",
-        `  describes: "${name}"`,
-        "",
-        `- id: "${name}"`,
-        "---",
-        "",
-        `# ${name}`,
-      ].join("\n"),
-    );
-    return fpath;
-  }
-
-  async writeNote(content: string) {
-    const fpath = join(this.dpath, `Pinboard Bookmarks.md`);
+  async writeNote(fname: string, content: string) {
+    const fpath = join(this.dpath, fname);
     await Deno.writeTextFile(
       fpath,
       content,

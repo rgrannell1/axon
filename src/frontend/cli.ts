@@ -1,9 +1,38 @@
-import { AXON_CLI } from "../commons/constants.ts";
-import { Backend } from "../core/backend.ts";
+
+export const AXON_CLI = `
+Usage:
+  axon search --dpath <dir> (--plugin <fpath> ...) [--json|--csv] <name>
+  axon import --dpath <dir> <name>
+  axon export neo4j --dpath <dir>
+  axon export sqlite
+  axon template --dpath <dir>
+
+  axon (-h|--help)
+
+Description:
+  Axon CLI
+
+Commands
+  search              retrieve search-results from Axon
+  export              output
+  new file
+
+Arguments:
+  <name>              File name
+
+Options:
+  --name              The name of the search to run. The search is defined in a loaded plugin.
+  --json              Display output as JSON.
+  --csv               Display output as CSV.
+  --dpath <dir>       Axon note directory.
+  --plugin <fpath>    A CSV of Typescript plugins for Axon.
+`;
+
+import { Backend, Plugins } from "../core/backend.ts";
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
 import { Neo4jExporter } from "../plugins/exporters/neo4j.ts";
-import { PinboardPlugin } from "../plugins/plugins/pinboard.ts";
+import { PinboardPlugin } from "../plugins/pinboard/plugin.ts";
 import { Vault } from "../notes/vault.ts";
 
 export enum FormatOptions {
@@ -111,7 +140,7 @@ export class CLI {
       fmt = FormatOptions.Text;
     }
 
-    await backend.init(args.plugins);
+    await backend.init();
 
     const reporter = new Reporter(fmt);
     await reporter.report(await backend.search(args.name));
@@ -120,7 +149,8 @@ export class CLI {
   static async start(): Promise<void> {
     const args = CLI.readArgs();
 
-    const plugins = {
+    // bad factoring!z
+    const clients = {
       pinboard: new PinboardPlugin(),
       vault: new Vault(args.dpath),
     };
@@ -130,19 +160,13 @@ export class CLI {
       new PinboardPlugin(),
     ];
 
-    const backend = new Backend(sources, plugins);
-    await backend.init(args.plugins);
+    const backend = new Backend(sources, clients, args.plugins);
+    await backend.init();
 
-    if (args.search) {
-      await this.search(backend, args);
-    } else if (args.export) {
-      await this.export(backend, args);
-    } else if (args.import) {
-      await this.import(backend, args);
-    } else if (args.newFile) {
-      await this.newFile(backend, args);
-    } else if (args.template) {
-      await this.template(backend, args);
+    for (const candidate of ['search', 'export', 'import', 'template']) {
+      if ((args as any)[candidate]) {
+        return (this as any)[candidate](backend, args);
+      }
     }
   }
 }
