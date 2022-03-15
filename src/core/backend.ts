@@ -1,4 +1,4 @@
-import { IBackend, IExporter, INote } from "../interfaces.ts";
+import { IExporter, INote } from "../interfaces.ts";
 import { FolderCache } from "../folder_cache.ts";
 import { State } from "../state.ts";
 import { IImporter, ITripleSource } from "../interfaces.ts";
@@ -26,7 +26,7 @@ export class Plugins {
 }
 
 
-export class Backend implements IBackend {
+export class Backend {
   plugins: Record<string, any> = {};
 
   state: State = new State(new FolderCache(CACHE_PATH_MOVE_TO_CFG));

@@ -3,8 +3,15 @@ import { Note } from "./note.ts";
 import { join } from "https://deno.land/std@0.63.0/path/mod.ts";
 import { State } from "../state.ts";
 import { ITripleSource } from "../interfaces.ts";
-import { Triple } from "../commons/model.ts";
 
+
+/**
+ * Represents the Axon Vault; a folder (presumed flat) containing all axon-format markdown notes.
+ *
+ * @export
+ * @class Vault
+ * @implements {ITripleSource}
+ */
 export class Vault implements ITripleSource {
   dpath: string;
 
@@ -16,13 +23,16 @@ export class Vault implements ITripleSource {
 
   async writeNote(fname: string, content: string) {
     const fpath = join(this.dpath, fname);
-    await Deno.writeTextFile(
-      fpath,
-      content,
-    );
+    await Deno.writeTextFile(fpath, content);
     return fpath;
   }
 
+  /**
+   * List markdown files in a vault
+   *
+   * @return {*}  {AsyncGenerator<INote, void, unknown>}
+   * @memberof Vault
+   */
   async *listNotes(): AsyncGenerator<INote, void, unknown> {
     for await (const entry of Deno.readDir(this.dpath)) {
       if (entry.isFile && entry.name.endsWith(".md")) {
@@ -31,39 +41,19 @@ export class Vault implements ITripleSource {
     }
   }
 
+
+  /**
+   * Read triples from each note in a vault, leaning on the state-cache to
+   * provide cached values where possible.
+   *
+   * @param {State} state
+   * @memberof Vault
+   */
   async *triples(state: State) {
     for await (const note of this.listNotes()) {
       for await (const triple of state.getCtxNotes(note)) {
         yield triple;
       }
-    }
-  }
-
-  async *processTriples(state: State, note: INote) {
-    await note.init();
-    const ctx = note.context();
-
-    let isCached = false;
-
-    for await (const triple of state.getTriples(ctx.id())) {
-      isCached = true;
-      yield triple;
-    }
-
-    if (isCached) {
-      return;
-    }
-
-    const triples: Triple[] = [];
-
-    for await (const triple of await note.triples()) {
-      triples.push(triple);
-    }
-
-    await state.addTriples(ctx.id(), triples);
-
-    for (const triple of triples) {
-      yield triple;
     }
   }
 }

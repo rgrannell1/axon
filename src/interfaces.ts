@@ -59,22 +59,9 @@ export interface INote {
   triples(): AsyncGenerator<Triple, any, unknown>;
 }
 
-export interface IConfig {
-}
-
 export interface IFrontend {
   init(): Promise<void>;
   start(): any;
-}
-
-export interface ISearch {
-}
-
-export interface IBackend {
-  search(name: string): Promise<any>;
-}
-
-export interface IPlugin {
 }
 
 export interface ITripleSource {
