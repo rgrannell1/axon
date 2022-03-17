@@ -16,7 +16,6 @@
 
 import { parse } from "https://deno.land/std@0.95.0/flags/mod.ts";
 
-
 const main = async () => {
   const flags = parse(Deno.args);
 
@@ -24,18 +23,16 @@ const main = async () => {
     id: "Sqlite Plugin",
     is: [
       "Axon/Plugin/Importer",
-      "Axon/Plugin/Exporter"
+      "Axon/Plugin/Exporter",
     ],
-    cache_key: ['not implemented', "Identifiable"],
+    cache_key: ["not implemented", "Identifiable"],
     date: [new Date().toISOString(), "Date"],
   };
 
   if (flags.plugin) {
-    console.log(JSON.stringify(plugin))
+    console.log(JSON.stringify(plugin));
   } else if (flags.fetch) {
-
   } else if (flags.write) {
-
   } else {
     Deno.exit(1);
   }

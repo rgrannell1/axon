@@ -14,12 +14,16 @@
   - [_, Identifier]
   date:
   - [_, Date]
+  schemas:
+    [_, URL]
 
 - id: PluginExporterSchema
   is: Axon/Schema
   forall: Axon/Plugin/Exporter
   cached_keys:
     [_, Identifier]
+  schemas:
+    [_, URL]
 
 # Plugins
 - id: PluginExporterSchema

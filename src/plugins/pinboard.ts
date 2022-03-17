@@ -11,7 +11,7 @@
  */
 
 import { parse } from "https://deno.land/std@0.95.0/flags/mod.ts";
-import { id } from "../../little-lib.ts";
+import { id } from "../../mod.ts";
 
 /**
  * Get the last date a bookmark was added
@@ -46,16 +46,17 @@ async function getBookmarks(key: string): Promise<void> {
     for (const bookmark of jsonData) {
       const entity = {
         id: id(bookmark.href, bookmark.time),
+        from: ["Pinboard", "BookmarkSource"],
         is: "PinboardBookmark",
         url: [bookmark.href, "URL"],
         description: [bookmark.description, "Description"],
         hash: [bookmark.hash, "Hash"],
-        date: [bookmark.time, "Date"]
+        date: [bookmark.time, "Date"],
       };
 
       console.log(JSON.stringify(entity));
     }
-
+break
     if (jsonData.length === 0) {
       break;
     }
@@ -76,17 +77,21 @@ const main = async () => {
   const plugin = {
     id: "Pinboard Import Plugin",
     is: [
-      "Axon/Plugin/Importer"
+      "Axon/Plugin/Importer",
     ],
     cache_key: [last_update_time, "Identifier"],
     date: [new Date().toISOString(), "Date"],
+    schemas: [
+      ['/home/rg/Code/deno-axon/src/plugins/pinboard.yaml', "URL"]
+    ]
   };
+
   if (flags.plugin) {
     console.log(JSON.stringify(plugin));
   } else if (flags.fetch) {
-    console.log(JSON.stringify(plugin));
     await getBookmarks(PINBOARD_API_KEY);
   } else {
+    console.log (JSON.stringify(Deno.args));
     Deno.exit(1);
   }
 };

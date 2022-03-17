@@ -120,10 +120,9 @@ const Concept = function (schema: AxonSchema) {
 
       thing.parents = new Set(Array.from(entity.parents));
 
-
       for (const [rel, relval] of Object.entries(entity.relationships)) {
         if (!keys.has(rel)) {
-          thing.relationships[rel] = relval
+          thing.relationships[rel] = relval;
         }
       }
 
@@ -189,7 +188,7 @@ class AxonSchema extends Entity {
     for (const [rel, pattern] of Object.entries(this.patterns)) {
       if (!entity.relationships.hasOwnProperty(rel)) {
         throw new TypeError(
-          `entity ${entity.id} is required by ${this.id} to have relationship ${rel}`,
+          `entity ${entity.id} is required by ${this.id} to have relationship "${rel}"`,
         );
       }
 
@@ -304,7 +303,7 @@ export class Knowledge {
 
     if (typeof schema === "undefined") {
       throw new TypeError(
-        `schema ${name} is not present. ${Object.keys(this.schemas)}`,
+        `schema ${name} is not present in the knowledge base. List of present schemas [${Object.keys(this.schemas)}]`,
       );
     }
 

@@ -3,3 +3,4 @@ deno-axon
 bs/env.sh
 my-searches
 personal-scripts/
+AXON_DB.sqlite

@@ -4,7 +4,7 @@ Usage:
   axon (-h|--help)
 
 Commands:
-  import             Import triples from an external resource or script.
+  import             Import triples from an external resource or script int
 `;
 
 const commands: Record<string, string> = {
