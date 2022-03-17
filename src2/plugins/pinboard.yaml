@@ -1,0 +1,14 @@
+
+- id: 'PinboardBookmarkSchema'
+  is: Axon/Schema
+  forall: PinboardBookmark
+  from:
+  - [Pinboard, BookmarkSource]
+  url:
+  - [_, URL]
+  description:
+  - [_, Description]
+  hash:
+  - [_, Hash]
+  date:
+  - [_, Date]
