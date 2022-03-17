@@ -16,6 +16,7 @@ flowchart TB
       library[Axon Library]
       schemas[Axon Schema] 
     end
+    click AxonCore "https://github.com/rgrannell1/axon/tree/main/src" "axon source-code"
 
     yourscripts[Your Scripts] -.- AxonCore
     pbscript[Import + Export Script] -.- AxonCore
