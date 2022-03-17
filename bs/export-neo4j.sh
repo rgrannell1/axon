@@ -9,4 +9,4 @@ deno run \
   --allow-net \
   --allow-env \
   --no-check=remote \
-  index.ts export neo4j --dpath ~/Drive/Axon
+  index.ts export neo4j --dpath ~/Drive/Obsidian/Axon

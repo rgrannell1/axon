@@ -10,5 +10,5 @@ deno run \
   --allow-env \
   --no-check=remote \
   index.ts import \
-  --dpath ~/Drive/Axon pinboard
+  --dpath /home/rg/Drive/Obsidian/Axon pinboard
 

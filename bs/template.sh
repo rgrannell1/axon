@@ -10,4 +10,4 @@ deno run \
   --allow-env \
   --no-check=remote \
   index.ts template \
-  --dpath ~/Drive/Axon
+  --dpath /home/rg/Drive/Obsidian/Axon

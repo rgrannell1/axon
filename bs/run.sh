@@ -10,5 +10,5 @@ deno run \
   --allow-env \
   --no-check=remote \
   index.ts search \
-  --dpath ~/Drive/Axon \
+  --dpath /home/rg/Drive/Obsidian/Axon \
   --plugin ~/Code/deno-axon/src/my-searches/main.ts "$1"

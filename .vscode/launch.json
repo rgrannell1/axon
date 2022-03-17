@@ -20,7 +20,7 @@
         "export",
         "neo4j",
         "--dpath",
-        "/home/rg/Drive/Axon"
+        "/home/rg/Drive/Obsidian/Axon"
       ],
       "attachSimplePort": 9229
     }
