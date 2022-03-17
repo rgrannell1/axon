@@ -23,9 +23,9 @@ export async function* readYaml(reader: Deno.Reader) {
   }
 }
 
-export async function* readExecutable(fpath: string) {
+export async function* readExecutable(fpath: string, flags: string[] = []) {
   const plugin = Deno.run({
-    cmd: [fpath, "--plugin"],
+    cmd: [fpath, "--plugin"].concat(flags),
     stdout: "piped",
     stderr: "piped",
   });

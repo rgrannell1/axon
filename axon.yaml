@@ -1,0 +1,34 @@
+
+# Axon's ontology
+# Objects that conform to an 'interface' in here are understood by axon and can do
+# useful things like import data
+
+- id: Identifier
+  comment: "Uniquely identifiable string"
+
+# Plugins
+- id: PluginImporterSchema
+  is: Axon/Schema
+  forall: Axon/Plugin/Importer
+  cache_key:
+  - [_, Identifier]
+  date:
+  - [_, Date]
+
+- id: PluginExporterSchema
+  is: Axon/Schema
+  forall: Axon/Plugin/Exporter
+  cached_keys:
+    [_, Identifier]
+
+# Plugins
+- id: PluginExporterSchema
+  is: Axon/Schema
+  forall: Axon/Plugin/Exporter
+
+# Bookmarks
+- id: Bookmark
+  is: 'Axon/Schema'
+  forall: 'Bookmark'
+  url: [_, URL]
+  date: [_, Date]

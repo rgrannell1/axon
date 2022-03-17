@@ -1,6 +1,15 @@
 #!/bin/sh
 //bin/true; exec deno run -A "$0" "$@"
 
+/*
+ * An axon plugin. Accepts
+ *
+ * --plugin               Prints plugin information as JSON
+ *
+ * --fetch=<cache-date>   Accepts a previous cache-date and returns anything added after that
+ *                          date.
+ */
+
 import { parse } from "https://deno.land/std@0.95.0/flags/mod.ts";
 import { id } from "../../little-lib.ts";
 
@@ -38,12 +47,10 @@ async function getBookmarks(key: string): Promise<void> {
       const entity = {
         id: id(bookmark.href, bookmark.time),
         is: "PinboardBookmark",
-        has: [
-          [bookmark.href, "PinboardBookmark/URL"],
-          [bookmark.description, "PinboardBookmark/Description"],
-          [bookmark.hash, "PinboardBookmark/Hash"],
-          [bookmark.time, "PinboardBookmark/Date"],
-        ],
+        url: [bookmark.href, "URL"],
+        description: [bookmark.description, "Description"],
+        hash: [bookmark.hash, "Hash"],
+        date: [bookmark.time, "Date"]
       };
 
       console.log(JSON.stringify(entity));
@@ -69,12 +76,11 @@ const main = async () => {
   const plugin = {
     id: "Pinboard Import Plugin",
     is: [
-      "Axon/Plugin/Importer",
+      "Axon/Plugin/Importer"
     ],
-    cache_key: [last_update_time, "Axon/Thing"],
+    cache_key: [last_update_time, "Identifier"],
     date: [new Date().toISOString(), "Date"],
   };
-
   if (flags.plugin) {
     console.log(JSON.stringify(plugin));
   } else if (flags.fetch) {
