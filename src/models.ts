@@ -3,11 +3,22 @@
  *
  */
 
+// check json schema using
+import Ajv from 'https://esm.sh/ajv';
+import axonSchema from "../schemas/axon.json" assert { type: "json" };
+
+
 export class Entity {
   id: string;
   parents = new Set<string>();
   static pseudorelationships = new Set(["is", "id"]);
   relationships: Record<string, any> = {};
+
+  static axonSchema = (new Ajv({
+    allowMatchingProperties: true
+  })).addSchema(axonSchema, 'axon');
+
+  static schema = Entity.axonSchema.getSchema('axon#Axon/Thing');
 
   constructor(val: { id: string }) {
     this.id = val.id;
@@ -32,84 +43,14 @@ export class Entity {
     return this.parents.has(concept);
   }
 
-  static assertValidId(val: any) {
-    // check thing is an object and has an id
-    if (!val || typeof val !== "object" || !val.hasOwnProperty("id")) {
-      throw new TypeError(
-        `all axon entities must be objects with an id property`,
-      );
-    }
-
-    if (typeof val.id !== "string") {
-      throw new TypeError(`all axon entity ids must be a string literal`);
-    }
-  }
-
-  static assertValidIs(val: Record<any, any>) {
-    if (val.hasOwnProperty("is")) {
-      if (typeof val.is !== "string") {
-        if (Array.isArray(val.is)) {
-          for (const subconcept of val.is) {
-            if (typeof subconcept !== "string") {
-              throw new TypeError(
-                'all axon entitiy "is" relations must map to a string or list of string-literals',
-              );
-            }
-          }
-        } else {
-          throw new TypeError(
-            'all axon entity "is" relations must map to a string or list of string-literals',
-          );
-        }
-      }
-    }
-  }
-
-  static assertValidRelationships(val: Record<any, any>) {
-    for (const [rel, tgts] of Object.entries(val)) {
-      if (typeof tgts !== "string") {
-        if (Array.isArray(tgts)) {
-          for (const part of tgts) {
-            if (typeof part !== "string") {
-              if (Array.isArray(part)) {
-                if (part.length === 0) {
-                  throw new TypeError(
-                    `part of relationship "${rel}" in ${val.id} was empty`,
-                  );
-                }
-                if (part.length > 2) {
-                  throw new TypeError(
-                    `part of relationship "${rel}" in ${val.id} was too long`,
-                  );
-                }
-
-                for (const subpart of part) {
-                  if (typeof subpart !== "string") {
-                    throw new TypeError(
-                      `inner part of relationship "${rel}" in ${val.id} had non-string type`,
-                    );
-                  }
-                }
-              } else {
-                throw new TypeError(
-                  `relationship "${rel}" in ${val.id} had non-string / string array type`,
-                );
-              }
-            }
-          }
-        } else {
-          throw new TypeError(
-            `relationship "${rel}" in ${val.id} had non-string / string array type`,
-          );
-        }
-      }
-    }
-  }
-
   static from(val: any): Entity {
-    Entity.assertValidId(val);
-    Entity.assertValidIs(val);
-    Entity.assertValidRelationships(val);
+    const validate =  Entity.schema as any;
+    const valid = validate(val);
+
+    if (!valid) {
+      console.error(validate.errors)
+      throw new Error('failed to validate entity, see error above.')
+    }
 
     return new Entity(val);
   }

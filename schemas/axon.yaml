@@ -1,24 +1,24 @@
 
-# Axon's ontology
+# Axon's in-language ontology / schemas
+
 # Objects that conform to an 'interface' in here are understood by axon and can do
-# useful things like import data
+# useful things like import data. Uses JSON-Schema where possible, but some relationships
+# like subsumptions are expressed here
 
 - id: Identifier
-  comment: "Uniquely identifiable string"
+  description: ["Uniquely identifiable string", Description]
 
+- id: Axon/Thing
+  schema: "#Axon/c/Thing"
 
 # Plugins
 - id: Axon/Plugin/Importer
   is: Axon/Plugin
+  schema: "#Axon/c/Plugin"
 
 - id: Axon/Plugin/Exporter
+  schema: "#Axon/c/Plugin/Exporter"
   is: Axon/Plugin
-
-- id: PluginSchema
-  is: Axon/Schema
-  forall: Axon/Plugin
-  schemas:
-    [_, URL]
 
 - id: PluginImporterSchema
   is: Axon/Schema
