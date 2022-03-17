@@ -1,9 +1,7 @@
 # Axon
 
-Axon is a note-taking system & search-language based on Description Logic.
 
-
-## Diagram 
+## Diagram
 
 ```mermaid
 flowchart TB
@@ -17,7 +15,7 @@ flowchart TB
 
     subgraph AxonCore[Axon]
       library[Axon Library]
-      schemas[Axon Schema] 
+      schemas[Axon Schema]
     end
     click AxonCore "https://github.com/rgrannell1/axon/tree/main/src" "axon source-code"
 
@@ -48,7 +46,7 @@ flowchart TB
     Opts -.- Rest
 
   end
-  
+
   CLIs <==>|data| Storage
 
   subgraph Storage[Storage Choices]

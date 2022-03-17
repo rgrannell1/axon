@@ -6,7 +6,20 @@
 - id: Identifier
   comment: "Uniquely identifiable string"
 
+
 # Plugins
+- id: Axon/Plugin/Importer
+  is: Axon/Plugin
+
+- id: Axon/Plugin/Exporter
+  is: Axon/Plugin
+
+- id: PluginSchema
+  is: Axon/Schema
+  forall: Axon/Plugin
+  schemas:
+    [_, URL]
+
 - id: PluginImporterSchema
   is: Axon/Schema
   forall: Axon/Plugin/Importer
@@ -14,21 +27,13 @@
   - [_, Identifier]
   date:
   - [_, Date]
-  schemas:
-    [_, URL]
 
 - id: PluginExporterSchema
   is: Axon/Schema
   forall: Axon/Plugin/Exporter
   cached_keys:
     [_, Identifier]
-  schemas:
-    [_, URL]
 
-# Plugins
-- id: PluginExporterSchema
-  is: Axon/Schema
-  forall: Axon/Plugin/Exporter
 
 # Bookmarks
 - id: Bookmark

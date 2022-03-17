@@ -1,3 +1,8 @@
+/*
+ * Things this module uses, like Entity, Knowledge, Subsumption
+ *
+ */
+
 export class Entity {
   id: string;
   parents = new Set<string>();
@@ -310,3 +315,5 @@ export class Knowledge {
     return Concept(schema);
   }
 }
+
+export type EntityStream = AsyncGenerator<Entity, any, any>

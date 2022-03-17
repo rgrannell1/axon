@@ -1,3 +1,8 @@
+/*
+ * Sqlite database access. This is used to
+ *
+ */
+
 import { DB } from "https://deno.land/x/sqlite/mod.ts";
 
 export enum Tables {

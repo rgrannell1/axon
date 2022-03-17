@@ -9,16 +9,15 @@ import { parse as yamlParse } from "https://deno.land/std@0.82.0/encoding/yaml.t
 import { readAll } from "https://deno.land/std/streams/conversion.ts";
 
 import * as Sqlite from "./sqlite.ts";
+import * as Constants from './constants.ts';
 
 const { Entity } = Models;
 
-type EntityStream = AsyncGenerator<Models.Entity, any, any>
-
-export async function* readJson(reader: Deno.Reader): EntityStream {
+export async function* readJson(reader: Deno.Reader): Models.EntityStream {
   throw new Error('not implemented');
 }
 
-export async function* readJsonStream(reader: Deno.Reader): EntityStream {
+export async function* readJsonStream(reader: Deno.Reader): Models.EntityStream {
   throw new Error('not implemented');
 }
 
@@ -29,7 +28,7 @@ export async function* readJsonStream(reader: Deno.Reader): EntityStream {
  * @export
  * @param {Deno.Reader} reader
  */
-export async function* readYaml(reader: Deno.Reader): EntityStream {
+export async function* readYaml(reader: Deno.Reader): Models.EntityStream {
   const content = new TextDecoder().decode(await readAll(reader));
   const result = await yamlParse(content);
 
@@ -45,7 +44,7 @@ export async function* readYaml(reader: Deno.Reader): EntityStream {
  * @param {string} fpath the file-path supplying entities
  * @param {string[]} [flags=[]]
  */
-async function* readExecutable(fpath: string, flags: string[] = []): EntityStream {
+async function* readExecutable(fpath: string, flags: string[] = []): Models.EntityStream {
   const plugin = Deno.run({
     cmd: [fpath].concat(flags),
     stdout: "piped",
@@ -79,8 +78,6 @@ async function* readExecutable(fpath: string, flags: string[] = []): EntityStrea
   }
 }
 
-const AXON_DB = "./AXON_DB.sqlite";
-
 /**
  * Read entities from an importer plugin. Check we are dealing with a plugin, retreive
  * plugin information, check if we've already cached things and can skip this process. When
@@ -90,9 +87,10 @@ const AXON_DB = "./AXON_DB.sqlite";
  * @param {string} fpath the file-path supplying entities
  * @param {*} args all provided cli arguments
  * @param {Models.Knowledge} knowledge knowledge-base containing information on all read entities
+ *
  * @return {*}  {AsyncGenerator<Models.Entity, any, any>}
  */
-export async function* readPlugin(fpath: string, args: any, knowledge: Models.Knowledge): EntityStream {
+export async function* readPlugin(fpath: string, args: any, knowledge: Models.Knowledge): Models.EntityStream {
   let plugin = undefined;
 
   const importerOpts: string[] = [];
@@ -146,7 +144,7 @@ export async function* readPlugin(fpath: string, args: any, knowledge: Models.Kn
   }
 
   // check if the current thing is cached
-  const importCache = await Sqlite.readCache(AXON_DB);
+  const importCache = await Sqlite.readCache(Constants.AXON_DB);
   const pluginCache = importCache[plugin.id];
 
   const cacheKey = plugin.cache_key[0];
@@ -177,9 +175,10 @@ export async function* readPlugin(fpath: string, args: any, knowledge: Models.Kn
  * @param {string} fpath the file-path supplying entities
  * @param {*} args all provided cli arguments
  * @param {Models.Knowledge} knowledge knowledge-base containing information on all read entities
+ *
  * @return {*}  {EntityStream}
  */
-export async function* read (fpath: string, args: any, knowledge: Models.Knowledge): EntityStream {
+export async function* read (fpath: string, args: any, knowledge: Models.Knowledge): Models.EntityStream {
   try {
     var stat = await Deno.stat(fpath);
   } catch (err) {

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://github.com/rgrannell1/axon/schemas/entity.json",
+  "title": "Axon Schema",
+  "description": "Describes the object structure of Axon/Thing - the top concept in axon - and child concepts used by the Axon library. See #Axon/c/Thing",
+
+  "$defs": {
+    "id": {
+      "type": "string",
+      "$id": "#Axon/Identifiable",
+      "title": "A uniquely identifiable name"
+    },
+    "targetSingleton": {
+      "type": "array",
+      "$id": "#Axon/TargetSingleton",
+      "title": "The receiver of a relationship.",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "maxItems": 1
+    },
+    "targetPair": {
+      "type": "array",
+      "examples": [
+        ["Jane", "Person"]
+      ],
+      "title": "The receiver of a relationship, and the concept that subsumes it.",
+      "$id": "#Axon/TargetPair",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+
+    "target": {
+      "$id": "#Axon/Target",
+      "type": "string"
+    },
+
+    "targetList": {
+      "type": "array",
+      "$id": "#Axon/TargetList",
+      "items": {
+        "oneOf": [
+          { "$ref": "#Axon/Target" },
+          { "$ref": "#Axon/TargetSingleton" },
+          { "$ref": "#Axon/TargetPair" }
+        ]
+      }
+    },
+    "relationships": {
+      "$id": "#Axon/Relationships",
+      "oneOf": [
+        { "$ref": "#Axon/TargetList" },
+        { "$ref": "#Axon/Target" }
+      ]
+    },
+
+    "Axon/Thing": {
+      "title": "Axon/c/Thing",
+      "$id": "#Axon/c/Thing",
+      "description": "Axon/c/Thing is the top-concept in Axon. Everything is a subconcept",
+      "required": ["id"],
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#Axon/Identifiable" }
+      },
+      "patternProperties": {
+        ".+": { "$ref": "#Axon/Relationships" }
+      }
+    }
+  }
+}

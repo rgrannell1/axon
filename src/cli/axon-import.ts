@@ -28,13 +28,7 @@ Options:
 `;
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
-import * as Readers from "../readers.ts";
-import { Models } from "../../mod.ts";
-
-
-const AXON_SCHEMAS = [
-  "/home/rg/Code/deno-axon/axon.yaml"
-];
+import { Models, Constants, Readers } from "../../mod.ts";
 
 
 /**
@@ -49,7 +43,7 @@ export async function main(argv: string[]) {
 
   const knowledge = new Models.Knowledge();
 
-  for (const fpath of AXON_SCHEMAS) {
+  for (const fpath of Constants.AXON_SCHEMAS) {
     for await (const entity of Readers.read(fpath, args, knowledge)) {
       knowledge.addEntity(entity);
     }

@@ -1,4 +1,6 @@
+# Pinboard Schema
 
+# All Pinboard bookmarks have this shape
 - id: 'PinboardBookmarkSchema'
   is: Axon/Schema
   forall: PinboardBookmark

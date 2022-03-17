@@ -1,5 +1,11 @@
 {
-  "compilerOptions": {},
-  "lint": {},
-  "fmt": {}
+  "compilerOptions": {
+    "allowJs": true,
+    "experimentalDecorators": true,
+    "jsx": "react",
+    "lib": [
+      "deno.window"
+    ],
+    "strict": true
+  }
 }

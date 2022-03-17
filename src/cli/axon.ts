@@ -3,8 +3,11 @@ Usage:
   axon <command> [options] [<args>...]
   axon (-h|--help)
 
+Description:
+  Axon
+
 Commands:
-  import             Import triples from an external resource or script int
+  import             Import triples from an external resource or script into a data-sink
 `;
 
 const commands: Record<string, string> = {
