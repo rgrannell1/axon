@@ -11,8 +11,6 @@ import { readAll } from "https://deno.land/std/streams/conversion.ts";
 import * as Sqlite from "./sqlite.ts";
 import * as Constants from './constants.ts';
 
-const { Entity } = Models;
-
 export async function* readJson(reader: Deno.Reader): Models.EntityStream {
   throw new Error('not implemented');
 }
@@ -33,7 +31,7 @@ export async function* readYaml(reader: Deno.Reader): Models.EntityStream {
   const result = await yamlParse(content);
 
   for (const val of Array.isArray(result) ? result : [result]) {
-    yield Entity.from(val);
+    yield Models.Thing(val);
   }
 }
 
@@ -63,7 +61,7 @@ async function* readExecutable(fpath: string, flags: string[] = []): Models.Enti
     for (const line of content.split('\n')) {
       if (line.trim().length > 0) {
         try {
-          const thing = Entity.from(JSON.parse(line));
+          const thing = Models.Thing(JSON.parse(line));
           yield thing;
         } catch (err) {
           console.error(`axon-import: failed to parse following entity`)
@@ -111,10 +109,8 @@ export async function* readPlugin(fpath: string, args: any, knowledge: Models.Kn
     )
   ) {
     knowledge.addEntity(entity);
-    const AxonPluginImporter = knowledge.concept("PluginImporterSchema");
-
     if (knowledge.subsumptions.is(entity.id, "Axon/Plugin/Importer")) {
-      plugin = AxonPluginImporter.fromEntity(entity) as any;
+      plugin = entity;
     }
 
     if (typeof plugin === "undefined") {
@@ -130,24 +126,11 @@ export async function* readPlugin(fpath: string, args: any, knowledge: Models.Kn
     );
   }
 
-  // read in plugin schemas, so we can validate entities we import
-  try {
-    for (const schema of plugin.schemas) {
-      for await (const entity of read(schema[0], args, knowledge)) {
-        knowledge.addEntity(entity);
-      }
-    }
-  } catch (err) {
-    console.error(`axon-importer: failed to load schemas from following plugin`);
-    console.error(JSON.stringify(plugin, null, 2));
-    throw err
-  }
-
   // check if the current thing is cached
   const importCache = await Sqlite.readCache(Constants.AXON_DB);
   const pluginCache = importCache[plugin.id];
 
-  const cacheKey = plugin.cache_key[0];
+  const cacheKey = (plugin as any).cache_key[0]; //fix
 
   // yes, this import is already stored in the exporter (unless the cache is lying)
   if (pluginCache && pluginCache.hasOwnProperty(cacheKey)) {

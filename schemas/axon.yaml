@@ -12,13 +12,16 @@
   schema: "#Axon/c/Thing"
 
 # Plugins
+- id: Axon/Plugin
+  schema: "#Axon/Plugin"
+
 - id: Axon/Plugin/Importer
   is: Axon/Plugin
-  schema: "#Axon/c/Plugin"
+  schema: "#Axon/Plugin/Importer"
 
 - id: Axon/Plugin/Exporter
-  schema: "#Axon/c/Plugin/Exporter"
   is: Axon/Plugin
+  schema: "#Axon/Plugin/Exporter"
 
 - id: PluginImporterSchema
   is: Axon/Schema

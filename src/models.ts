@@ -1,5 +1,5 @@
 /*
- * Things this module uses, like Entity, Knowledge, Subsumption
+ * Things this module uses, like thing, Knowledge, Subsumption
  *
  */
 
@@ -7,173 +7,68 @@
 import Ajv from 'https://esm.sh/ajv';
 import axonSchema from "../schemas/axon.json" assert { type: "json" };
 
-
-export class Entity {
-  id: string;
-  parents = new Set<string>();
-  static pseudorelationships = new Set(["is", "id"]);
-  relationships: Record<string, any> = {};
-
-  static axonSchema = (new Ajv({
+const axonSchemaAvj = (new Ajv({
     allowMatchingProperties: true
-  })).addSchema(axonSchema, 'axon');
+})).addSchema(axonSchema, 'axon');
 
-  static schema = Entity.axonSchema.getSchema('axon#Axon/Thing');
+const axonThingChecker: any = axonSchemaAvj.getSchema('axon#Axon/Thing');
 
-  constructor(val: { id: string }) {
-    this.id = val.id;
+// Axon/Thing.
+export type AxonThing = {
+  id: string,
+  is?: string | [string[]],
+  includes?: [string[]],
+  forall?: string,
+} & {
+  [key: string]: string | string[] | (string | [string] | [string, string])[]
+  [method: symbol]: any
+}
 
-    for (const [relname, rels] of Object.entries(val)) {
-      const relVals = Array.isArray(rels) ? rels : [rels];
-      if (relname === "is") {
-        for (const parent of relVals) {
-          this.parents.add(parent as string);
-        }
-      }
+let get = Symbol('get')
+let parents = Symbol('parents')
 
-      if (Entity.pseudorelationships.has(relname)) {
-        continue;
-      }
-
-      this.relationships[relname] = relVals;
-    }
-  }
-
-  is(concept: string): boolean {
-    return this.parents.has(concept);
-  }
-
-  static from(val: any): Entity {
-    const validate =  Entity.schema as any;
-    const valid = validate(val);
-
-    if (!valid) {
-      console.error(validate.errors)
-      throw new Error('failed to validate entity, see error above.')
+const axonThingMethods = {
+  [get] (field: string) {
+    if (!(field in this)) {
+      return []
     }
 
-    return new Entity(val);
+    if (Array.isArray(this[field as any])) {
+      return this[field as any]
+    } else {
+      return [this[field as any]];
+    }
+  },
+  [parents] (): Set<string> {
+    const part:any = this[get]('is')
+    return new Set(part)
   }
 }
 
-// Schema
-const Concept = function (schema: AxonSchema) {
-  const keys = new Set<string>(Object.keys(schema.patterns));
+export const Thing = (val: any): AxonThing => {
+  const valid = axonThingChecker(val)
 
-  const newConceptClass = class extends Entity {
-    static fromEntity(entity: Entity) {
-      const thing = new this({ id: entity.id });
-
-      thing.parents = new Set(Array.from(entity.parents));
-
-      for (const [rel, relval] of Object.entries(entity.relationships)) {
-        if (!keys.has(rel)) {
-          thing.relationships[rel] = relval;
-        }
-      }
-
-      for (const rel of keys) {
-        (thing as any)[rel] = entity.relationships[rel];
-      }
-
-      return thing;
-    }
-  };
-
-  Object.defineProperty(newConceptClass, "name", {
-    value: schema.id,
-  });
-
-  return newConceptClass;
-};
-
-class AxonSchema extends Entity {
-  patterns: Record<string, any> = {};
-  forall: string[] = [];
-
-  static assertValidForall(entity: Entity) {
-    if (!entity.relationships.forall) {
-      throw new TypeError("Axon/Schema requires relationship forall");
-    }
-
-    for (const concept of entity.relationships.forall) {
-      if (typeof concept !== "string") {
-        throw new TypeError(
-          "Axon/Schema requires relationship forall to be a list of strings",
-        );
-      }
-    }
+  if (!valid) {
+    console.error(valid.errors)
+    throw new TypeError('invalid thing')
   }
 
-  static fromEntity(entity: Entity): AxonSchema {
-    AxonSchema.assertValidForall(entity);
-
-    const schema = new AxonSchema({ id: entity.id });
-    schema.id = entity.id;
-    schema.parents = new Set(Array.from(entity.parents));
-    schema.forall = entity.relationships.forall;
-
-    for (const [relname, pattern] of Object.entries(entity.relationships)) {
-      if (relname !== "forall") {
-        schema.patterns[relname] = pattern;
-      }
-    }
-
-    return schema;
-  }
-
-  test(entity: Entity, subsumptions: Subsumptions) {
-    const match = this.forall.some((concept: string) => {
-      return subsumptions.is(entity.id, concept);
-    });
-
-    if (!match) {
-      return;
-    }
-
-    for (const [rel, pattern] of Object.entries(this.patterns)) {
-      if (!entity.relationships.hasOwnProperty(rel)) {
-        throw new TypeError(
-          `entity ${entity.id} is required by ${this.id} to have relationship "${rel}"`,
-        );
-      }
-
-      const candidate = entity.relationships[rel];
-
-      const candidateNested = Array.isArray(candidate[0])
-        ? candidate
-        : [candidate];
-
-      const nested = Array.isArray(pattern[0]) ? pattern : [pattern];
-
-      for (const partialPattern of nested) {
-        const [src, tgt] = partialPattern;
-
-        const matched = candidateNested.some((relPart: any) => {
-          if (relPart.length !== 2) {
-            return false;
-          }
-
-          return (src === relPart[0] || src === "_") &&
-            (tgt === "_" || subsumptions.is(relPart[1], tgt));
-        });
-
-        if (!matched) {
-          throw new TypeError(
-            `entity ${entity.id} is required by ${this.id} to match pattern, but failed to match ${rel} ${
-              JSON.stringify(candidate)
-            } onto ${partialPattern}`,
-          );
-        }
-      }
-    }
-  }
+  // assign a few methods to the object
+  return Object.assign(Object.create(axonThingMethods), val)
 }
+
+
+// TODO re-add axonschema
 
 export class Subsumptions {
   graph: Record<string, Set<string>>;
+  schemas: Record<string, string>;
+
   constructor() {
     this.graph = {};
+    this.schemas = {
+      'Axon/Thing': '#Axon/Thing'
+    };
   }
 
   add(child: string, parent: string) {
@@ -182,10 +77,20 @@ export class Subsumptions {
       : this.graph[child] = new Set<string>([parent]);
   }
 
-  record(entity: Entity) {
-    for (const parent of entity.parents) {
-      this.add(entity.id, parent);
+  addSchema(child: string, schema: string[]) {
+    if (schema.length > 0) {
+      this.schemas[child] = schema[0]
     }
+  }
+
+  record(thing: AxonThing) {
+    for (const parent of thing[parents]()) {
+      this.add(thing.id, parent);
+    }
+
+    this.addSchema(thing.id, thing[get]('schema'))
+
+    return this.subsumedBy(thing.id)
   }
 
   is(src: string, tgt: string) {
@@ -223,38 +128,80 @@ export class Subsumptions {
 
     return false;
   }
+
+  subsumedBy(src: string): Set<string> {
+    const visited = new Set<string>();
+    const queue = [src];
+    const concepts = new Set<string>(['Axon/Thing']);
+
+    while (queue.length > 0) {
+      let curr = queue.pop();
+
+      if (!curr) {
+        break;
+      }
+      if (visited.has(curr)) {
+        continue;
+      }
+      if (src !== curr) {
+        concepts.add(curr)
+      }
+
+      const parents = this.graph.hasOwnProperty(curr)
+        ? this.graph[curr]
+        : new Set<string>();
+
+      for (const parent of Array.from(parents)) {
+        if (!visited.has(parent)) {
+          queue.push(parent);
+        }
+      }
+    }
+
+    return concepts;
+  }
 }
 
 export class Knowledge {
-  schemas: Record<string, AxonSchema> = {};
+//  schemas: Record<string, AxonSchema> = {};
   subsumptions = new Subsumptions();
 
-  constructor() {
+  schemas(concepts: Set<string>) {
+    const joined = {
+
+      allOf: [] as any[]
+    }
+    for (const concept of concepts) {
+      const ref = this.subsumptions.schemas[concept]
+
+      if (ref && ref.startsWith('#')) {
+        const data = axonSchemaAvj.getSchema(`axon${ref}`) // TODO security
+        if (data?.schema) {
+          joined.allOf.push(data.schema)
+        } else {
+          throw new TypeError(`failed to retrieve schema for ${ref} (concept ${concept})`)
+        }
+      }
+
+      return joined
+    }
   }
 
-  addEntity(entity: Entity) {
-    this.subsumptions.record(entity);
+  addEntity(thing: AxonThing) {
+    const concepts = this.subsumptions.record(thing);
 
-    for (const schema of Object.values(this.schemas)) {
-      schema.test(entity, this.subsumptions);
-    }
+    this.schemas(concepts)
 
-    if (this.subsumptions.is(entity.id, "Axon/Schema")) {
-      this.schemas[entity.id] = AxonSchema.fromEntity(entity);
-    }
-  }
 
-  concept(name: string) {
-    const schema = this.schemas[name];
+    //
+    //    for (const schema of Object.values(this.schemas)) {
+//      schema.test(thing, this.subsumptions);
+//    }
 
-    if (typeof schema === "undefined") {
-      throw new TypeError(
-        `schema ${name} is not present in the knowledge base. List of present schemas [${Object.keys(this.schemas)}]`,
-      );
-    }
-
-    return Concept(schema);
+//    if (this.subsumptions.is(thing.id, "Axon/Schema")) {
+//      this.schemas[thing.id] = AxonSchema.fromthing(thing);
+//    }
   }
 }
 
-export type EntityStream = AsyncGenerator<Entity, any, any>
+export type EntityStream = AsyncGenerator<AxonThing, any, any>
