@@ -62,7 +62,7 @@
       "title": "Axon/Schema/Includes",
       "$id": "#Axon/Schema/Includes",
       "description": "Axon/Schema/Includes describes the `includes` section in Axon",
-      "items": {  "$ref": "#Axon/Schema/Target" }
+      "items": { "$ref": "#Axon/Schema/Target" }
     },
 
     "Axon/Thing": {
@@ -90,7 +90,7 @@
       "title": "Axon/Plugin/Importer",
       "$id": "#Axon/Plugin/Importer",
       "description": "Axon/Plugin/Importer describes things Axon can read from",
-      "required": [ "cache_key", "date" ],
+      "required": ["cache_key", "date"],
       "type": "object"
     },
 
@@ -98,7 +98,15 @@
       "title": "Axon/Plugin/Exporter",
       "$id": "#Axon/Plugin/Exporter",
       "description": "Axon/Plugin/Exporter describes things Axon can write to",
-      "required": [ "cached_keys", "date" ],
+      "required": ["cached_keys", "date"],
+      "type": "object"
+    },
+
+    "Axon/Plugin/Transformer": {
+      "title": "Axon/Plugin/Transformer",
+      "$id": "#Axon/Plugin/Transformer",
+      "description": "Axon/Plugin/Transformer reads in entities, and deletes them, updates them, or adds new entities",
+      "required": [],
       "type": "object"
     }
   }

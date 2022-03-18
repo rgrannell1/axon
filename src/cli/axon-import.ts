@@ -28,8 +28,7 @@ Options:
 `;
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
-import { Models, Constants, Readers } from "../../mod.ts";
-
+import { Constants, Models, Readers } from "../../mod.ts";
 
 /**
  * Import entities into a data-sink
@@ -44,13 +43,13 @@ export async function main(argv: string[]) {
   const knowledge = new Models.Knowledge();
 
   for (const fpath of Constants.AXON_SCHEMAS) {
-    for await (const entity of Readers.read(fpath, args, knowledge)) {
-      knowledge.addEntity(entity);
+    for await (const thing of Readers.read(fpath, args, knowledge)) {
+      knowledge.addThing(thing);
     }
   }
 
   // grab entities using a generic reader to try extract entities from the file
-  for await (const entity of Readers.read(from, args, knowledge)) {
-    console.log(entity);
+  for await (const thing of Readers.read(from, args, knowledge)) {
+    console.log(thing);
   }
 }

@@ -4,59 +4,58 @@
  */
 
 // check json schema using
-import Ajv from 'https://esm.sh/ajv';
+import Ajv from "https://esm.sh/ajv";
 import axonSchema from "../schemas/axon.json" assert { type: "json" };
 
 const axonSchemaAvj = (new Ajv({
-    allowMatchingProperties: true
-})).addSchema(axonSchema, 'axon');
+  allowMatchingProperties: true,
+})).addSchema(axonSchema, "axon");
 
-const axonThingChecker: any = axonSchemaAvj.getSchema('axon#Axon/Thing');
+const axonThingChecker: any = axonSchemaAvj.getSchema("axon#Axon/Thing");
 
 // Axon/Thing.
 export type AxonThing = {
-  id: string,
-  is?: string | [string[]],
-  includes?: [string[]],
-  forall?: string,
+  id: string;
+  is?: string | [string[]];
+  includes?: [string[]];
+  forall?: string;
 } & {
-  [key: string]: string | string[] | (string | [string] | [string, string])[]
-  [method: symbol]: any
-}
+  [key: string]: string | string[] | (string | [string] | [string, string])[];
+  [method: symbol]: any;
+};
 
-let get = Symbol('get')
-let parents = Symbol('parents')
+let get = Symbol("get");
+let parents = Symbol("parents");
 
 const axonThingMethods = {
-  [get] (field: string) {
+  [get](field: string) {
     if (!(field in this)) {
-      return []
+      return [];
     }
 
     if (Array.isArray(this[field as any])) {
-      return this[field as any]
+      return this[field as any];
     } else {
       return [this[field as any]];
     }
   },
-  [parents] (): Set<string> {
-    const part:any = this[get]('is')
-    return new Set(part)
-  }
-}
+  [parents](): Set<string> {
+    const part: any = this[get]("is");
+    return new Set(part);
+  },
+};
 
 export const Thing = (val: any): AxonThing => {
-  const valid = axonThingChecker(val)
+  const valid = axonThingChecker(val);
 
   if (!valid) {
-    console.error(valid.errors)
-    throw new TypeError('invalid thing')
+    console.error(valid.errors);
+    throw new TypeError("invalid thing");
   }
 
   // assign a few methods to the object
-  return Object.assign(Object.create(axonThingMethods), val)
-}
-
+  return Object.assign(Object.create(axonThingMethods), val);
+};
 
 // TODO re-add axonschema
 
@@ -67,7 +66,7 @@ export class Subsumptions {
   constructor() {
     this.graph = {};
     this.schemas = {
-      'Axon/Thing': '#Axon/Thing'
+      "Axon/Thing": "#Axon/Thing",
     };
   }
 
@@ -79,7 +78,7 @@ export class Subsumptions {
 
   addSchema(child: string, schema: string[]) {
     if (schema.length > 0) {
-      this.schemas[child] = schema[0]
+      this.schemas[child] = schema[0];
     }
   }
 
@@ -88,9 +87,9 @@ export class Subsumptions {
       this.add(thing.id, parent);
     }
 
-    this.addSchema(thing.id, thing[get]('schema'))
+    this.addSchema(thing.id, thing[get]("schema"));
 
-    return this.subsumedBy(thing.id)
+    return this.subsumedBy(thing.id);
   }
 
   is(src: string, tgt: string) {
@@ -132,7 +131,7 @@ export class Subsumptions {
   subsumedBy(src: string): Set<string> {
     const visited = new Set<string>();
     const queue = [src];
-    const concepts = new Set<string>(['Axon/Thing']);
+    const concepts = new Set<string>(["Axon/Thing"]);
 
     while (queue.length > 0) {
       let curr = queue.pop();
@@ -144,7 +143,7 @@ export class Subsumptions {
         continue;
       }
       if (src !== curr) {
-        concepts.add(curr)
+        concepts.add(curr);
       }
 
       const parents = this.graph.hasOwnProperty(curr)
@@ -163,45 +162,41 @@ export class Subsumptions {
 }
 
 export class Knowledge {
-//  schemas: Record<string, AxonSchema> = {};
+  //  schemas: Record<string, AxonSchema> = {};
   subsumptions = new Subsumptions();
 
   schemas(concepts: Set<string>) {
-    const joined = {
+    const relevantSchemas: any[] = [];
 
-      allOf: [] as any[]
-    }
     for (const concept of concepts) {
-      const ref = this.subsumptions.schemas[concept]
+      const ref = this.subsumptions.schemas[concept];
 
-      if (ref && ref.startsWith('#')) {
-        const data = axonSchemaAvj.getSchema(`axon${ref}`) // TODO security
+      if (ref && ref.startsWith("#")) {
+        const data = axonSchemaAvj.getSchema(`axon${ref}`);
         if (data?.schema) {
-          joined.allOf.push(data.schema)
+          relevantSchemas.push(data);
         } else {
-          throw new TypeError(`failed to retrieve schema for ${ref} (concept ${concept})`)
+          throw new TypeError(
+            `failed to retrieve schema for ${ref} (concept ${concept})`,
+          );
         }
       }
-
-      return joined
     }
+
+    return relevantSchemas;
   }
 
-  addEntity(thing: AxonThing) {
+  addThing(thing: AxonThing) {
     const concepts = this.subsumptions.record(thing);
 
-    this.schemas(concepts)
-
-
-    //
-    //    for (const schema of Object.values(this.schemas)) {
-//      schema.test(thing, this.subsumptions);
-//    }
-
-//    if (this.subsumptions.is(thing.id, "Axon/Schema")) {
-//      this.schemas[thing.id] = AxonSchema.fromthing(thing);
-//    }
+    for (const schema of this.schemas(concepts)) {
+      const valid = schema(thing)
+      if (!valid) {
+        console.log(schema.errors)
+        throw new TypeError(`thing with concepts [${concepts}] did not match schema, see above errors.`)
+      }
+    }
   }
 }
 
-export type EntityStream = AsyncGenerator<AxonThing, any, any>
+export type ThingStream = AsyncGenerator<AxonThing, any, any>;

@@ -1,5 +1,5 @@
 /*
- * Read entities & triples from a variety of input formats. Yield them as
+ * Read things & triples from a variety of input formats. Yield them as
  * async generators to be consumed by other functions.
  *
  */
@@ -9,24 +9,26 @@ import { parse as yamlParse } from "https://deno.land/std@0.82.0/encoding/yaml.t
 import { readAll } from "https://deno.land/std/streams/conversion.ts";
 
 import * as Sqlite from "./sqlite.ts";
-import * as Constants from './constants.ts';
+import * as Constants from "./constants.ts";
 
-export async function* readJson(reader: Deno.Reader): Models.EntityStream {
-  throw new Error('not implemented');
+export async function* readJson(reader: Deno.Reader): Models.ThingStream {
+  throw new Error("not implemented");
 }
 
-export async function* readJsonStream(reader: Deno.Reader): Models.EntityStream {
-  throw new Error('not implemented');
+export async function* readJsonStream(
+  reader: Deno.Reader,
+): Models.ThingStream {
+  throw new Error("not implemented");
 }
 
 /**
- * Read YAML from a file, allowing a single yaml entity to be
- * returned, or an array or entities.
+ * Read YAML from a file, allowing a single yaml thing to be
+ * returned, or an array or things.
  *
  * @export
  * @param {Deno.Reader} reader
  */
-export async function* readYaml(reader: Deno.Reader): Models.EntityStream {
+export async function* readYaml(reader: Deno.Reader): Models.ThingStream {
   const content = new TextDecoder().decode(await readAll(reader));
   const result = await yamlParse(content);
 
@@ -36,13 +38,16 @@ export async function* readYaml(reader: Deno.Reader): Models.EntityStream {
 }
 
 /**
- * Read entities from an executable, without any specific knowledge about flags being passed in
+ * Read things from an executable, without any specific knowledge about flags being passed in
  *
  * @export
- * @param {string} fpath the file-path supplying entities
+ * @param {string} fpath the file-path supplying things
  * @param {string[]} [flags=[]]
  */
-async function* readExecutable(fpath: string, flags: string[] = []): Models.EntityStream {
+async function* readExecutable(
+  fpath: string,
+  flags: string[] = [],
+): Models.ThingStream {
   const plugin = Deno.run({
     cmd: [fpath].concat(flags),
     stdout: "piped",
@@ -58,15 +63,15 @@ async function* readExecutable(fpath: string, flags: string[] = []): Models.Enti
   if (code === 0) {
     const content = new TextDecoder().decode(rawOutput);
 
-    for (const line of content.split('\n')) {
+    for (const line of content.split("\n")) {
       if (line.trim().length > 0) {
         try {
           const thing = Models.Thing(JSON.parse(line));
           yield thing;
         } catch (err) {
-          console.error(`axon-import: failed to parse following entity`)
-          console.error(line)
-          throw err
+          console.error(`axon-import: failed to parse following thing`);
+          console.error(line);
+          throw err;
         }
       }
     }
@@ -77,18 +82,22 @@ async function* readExecutable(fpath: string, flags: string[] = []): Models.Enti
 }
 
 /**
- * Read entities from an importer plugin. Check we are dealing with a plugin, retreive
+ * Read things from an importer plugin. Check we are dealing with a plugin, retreive
  * plugin information, check if we've already cached things and can skip this process. When
- * we've retrieved plugin information, read in entities and yield them asyncronously
+ * we've retrieved plugin information, read in things and yield them asyncronously
  *
  * @export
- * @param {string} fpath the file-path supplying entities
+ * @param {string} fpath the file-path supplying things
  * @param {*} args all provided cli arguments
- * @param {Models.Knowledge} knowledge knowledge-base containing information on all read entities
+ * @param {Models.Knowledge} knowledge knowledge-base containing information on all read things
  *
- * @return {*}  {AsyncGenerator<Models.Entity, any, any>}
+ * @return {*}  {AsyncGenerator<Models.Thing, any, any>}
  */
-export async function* readPlugin(fpath: string, args: any, knowledge: Models.Knowledge): Models.EntityStream {
+export async function* readPlugin(
+  fpath: string,
+  args: any,
+  knowledge: Models.Knowledge,
+): Models.ThingStream {
   let plugin = undefined;
 
   const importerOpts: string[] = [];
@@ -103,26 +112,26 @@ export async function* readPlugin(fpath: string, args: any, knowledge: Models.Kn
 
   // call the plugin script and see if we get an importer plugin in response
   for await (
-    const entity of readExecutable(
+    const thing of readExecutable(
       fpath,
       importerOpts.concat("--plugin"),
     )
   ) {
-    knowledge.addEntity(entity);
-    if (knowledge.subsumptions.is(entity.id, "Axon/Plugin/Importer")) {
-      plugin = entity;
+    knowledge.addThing(thing);
+    if (knowledge.subsumptions.is(thing.id, "Axon/Plugin/Importer")) {
+      plugin = thing;
     }
 
     if (typeof plugin === "undefined") {
       throw new Error(
-        `axon-importer: expected first entity returned from plugin to a "Axon/Plugin/Importer" definition`,
+        `axon-importer: expected first thing returned from plugin to a "Axon/Plugin/Importer" definition`,
       );
     }
   }
 
   if (typeof plugin === "undefined") {
     throw new Error(
-      `axon-importer: expected first entity returned from plugin to a "Axon/Plugin/Importer" definition`,
+      `axon-importer: expected first thing returned from plugin to a "Axon/Plugin/Importer" definition`,
     );
   }
 
@@ -140,28 +149,31 @@ export async function* readPlugin(fpath: string, args: any, knowledge: Models.Kn
 
   // not stored, invoke the importer and retreive and store results
   for await (
-    const entity of readExecutable(
+    const thing of readExecutable(
       fpath,
       importerOpts.concat(`--fetch`),
     )
   ) {
-    knowledge.addEntity(entity);
-    yield entity
+    knowledge.addThing(thing);
+    yield thing;
   }
 }
 
-
 /**
- * Read anything we understand into a stream of entities.
+ * Read anything we understand into a stream of things.
  *
  * @export
- * @param {string} fpath the file-path supplying entities
+ * @param {string} fpath the file-path supplying things
  * @param {*} args all provided cli arguments
- * @param {Models.Knowledge} knowledge knowledge-base containing information on all read entities
+ * @param {Models.Knowledge} knowledge knowledge-base containing information on all read things
  *
- * @return {*}  {EntityStream}
+ * @return {*}  {ThingStream}
  */
-export async function* read (fpath: string, args: any, knowledge: Models.Knowledge): Models.EntityStream {
+export async function* read(
+  fpath: string,
+  args: any,
+  knowledge: Models.Knowledge,
+): Models.ThingStream {
   try {
     var stat = await Deno.stat(fpath);
   } catch (err) {
@@ -173,28 +185,30 @@ export async function* read (fpath: string, args: any, knowledge: Models.Knowled
   }
 
   if (!stat.isFile) {
-    throw new Error(`axon-import: can only import files, ${fpath} was not a file.`);
+    throw new Error(
+      `axon-import: can only import files, ${fpath} was not a file.`,
+    );
   }
 
   if (stat.mode && stat.mode & 0o100) {
-    for await (const entity of readPlugin(fpath, args, knowledge)) {
-      yield entity
+    for await (const thing of readPlugin(fpath, args, knowledge)) {
+      yield thing;
     }
   } else {
     const srcConn = await Deno.open(fpath);
 
     try {
       if (fpath.toLowerCase().endsWith(".yaml" || ".yml")) {
-        for await (const entity of readYaml(srcConn)) {
-          yield entity
+        for await (const thing of readYaml(srcConn)) {
+          yield thing;
         }
       } else if (fpath.toLowerCase().endsWith(".jsonl")) {
-        for await (const entity of readJsonStream(srcConn)) {
-          yield entity
+        for await (const thing of readJsonStream(srcConn)) {
+          yield thing;
         }
       } else if (fpath.toLowerCase().endsWith(".json")) {
-        for await (const entity of readJson(srcConn)) {
-          yield entity
+        for await (const thing of readJson(srcConn)) {
+          yield thing;
         }
       } else {
         throw new Error(`axon-import: do not know how to import from ${fpath}`);

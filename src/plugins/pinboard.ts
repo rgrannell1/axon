@@ -35,7 +35,7 @@ async function getLastUpdate(key: string): Promise<string> {
  */
 async function getBookmarks(key: string): Promise<void> {
   let offset = 0;
-  const size = 50;
+  const size = 5;
 
   while (true) {
     const jsonResponse = await fetch(
@@ -44,7 +44,7 @@ async function getBookmarks(key: string): Promise<void> {
     const jsonData = await jsonResponse.json();
 
     for (const bookmark of jsonData) {
-      const entity = {
+      const thing = {
         id: id(bookmark.href, bookmark.time),
         from: ["Pinboard", "BookmarkSource"],
         is: "PinboardBookmark",
@@ -54,9 +54,9 @@ async function getBookmarks(key: string): Promise<void> {
         date: [bookmark.time, "Date"],
       };
 
-      console.log(JSON.stringify(entity));
+      console.log(JSON.stringify(thing));
     }
-break
+    break;
     if (jsonData.length === 0) {
       break;
     }
@@ -82,8 +82,8 @@ const main = async () => {
     cache_key: [last_update_time, "Identifier"],
     date: [new Date().toISOString(), "Date"],
     schemas: [
-      ['/home/rg/Code/deno-axon/src/plugins/pinboard.yaml', "URL"]
-    ]
+      ["/home/rg/Code/deno-axon/src/plugins/pinboard.yaml", "URL"],
+    ],
   };
 
   if (flags.plugin) {
@@ -91,7 +91,7 @@ const main = async () => {
   } else if (flags.fetch) {
     await getBookmarks(PINBOARD_API_KEY);
   } else {
-    console.log (JSON.stringify(Deno.args));
+    console.log(JSON.stringify(Deno.args));
     Deno.exit(1);
   }
 };

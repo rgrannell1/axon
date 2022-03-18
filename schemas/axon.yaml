@@ -9,7 +9,7 @@
   description: ["Uniquely identifiable string", Description]
 
 - id: Axon/Thing
-  schema: "#Axon/c/Thing"
+  schema: "#Axon/Thing"
 
 # Plugins
 - id: Axon/Plugin

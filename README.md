@@ -1,6 +1,5 @@
 # Axon
 
-
 ## Diagram
 
 ```mermaid
