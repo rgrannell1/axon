@@ -7,12 +7,26 @@
 import { Models } from "../mod.ts";
 import { stringify as yamlStringify } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
 
+type Writer = (things: Models.ThingStream) => Promise<void>
+
 export async function writeYaml(
   things: Models.ThingStream,
   writer: Deno.Writer,
 ) {
   for await (const thing of things) {
     const encodedThing = yamlStringify([thing] as any);
+    const encoded = new TextEncoder().encode(`\n${encodedThing}`);
+
+    await writer.write(encoded)
+  }
+}
+
+export async function writeJsonl(
+  things: Models.ThingStream,
+  writer: Deno.Writer,
+) {
+  for await (const thing of things) {
+    const encodedThing = JSON.stringify(thing as any);
     const encoded = new TextEncoder().encode(`\n${encodedThing}`);
 
     await writer.write(encoded)
@@ -40,7 +54,9 @@ export async function write(
 
   if (fpath.toLowerCase().endsWith(".yaml" || ".yml")) {
     await writeYaml(things, conn)
-  } else {
-    throw new Error('not sure how to write')
+  } else if (fpath.toLowerCase().endsWith(".jsonl")) {
+    await writeJsonl(things, conn)
+  }  else {
+    throw new Error(`not sure how to write ${fpath}`)
   }
 }
