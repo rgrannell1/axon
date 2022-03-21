@@ -54,22 +54,32 @@ async function* readExecutable(
     stderr: "piped",
   });
 
-  const { code } = await plugin.status();
-  const rawOutput = await plugin.output();
-  const rawError = await plugin.stderrOutput();
+  const [code, rawOutput, rawError] = await Promise.all([
+    plugin.status(),
+    plugin.output(),
+    plugin.stderrOutput(),
+  ])
 
   console.error(`axon-inport: calling plugin ${fpath}\n`);
 
-  if (code === 0) {
+  if (code.code === 0) {
     const content = new TextDecoder().decode(rawOutput);
 
     for (const line of content.split("\n")) {
       if (line.trim().length > 0) {
         try {
-          const thing = Models.Thing(JSON.parse(line));
+          var lineObject = JSON.parse(line);
+        } catch (err) {
+          console.error(`axon-import: failed to parse following thing as JSON`);
+          console.error(line);
+          throw err;
+        }
+
+        try {
+          const thing = Models.Thing(lineObject);
           yield thing;
         } catch (err) {
-          console.error(`axon-import: failed to parse following thing`);
+          console.error(`axon-import: failed to validate following thing`);
           console.error(line);
           throw err;
         }
@@ -111,12 +121,14 @@ export async function* readPlugin(
   }
 
   // call the plugin script and see if we get an importer plugin in response
+  let count = 0
   for await (
     const thing of readExecutable(
       fpath,
       importerOpts.concat("--plugin"),
     )
   ) {
+    ++count
     knowledge.addThing(thing);
     if (knowledge.subsumptions.is(thing.id, "Axon/Plugin/Importer")) {
       plugin = thing;
@@ -127,6 +139,12 @@ export async function* readPlugin(
         `axon-importer: expected first thing returned from plugin to a "Axon/Plugin/Importer" definition`,
       );
     }
+  }
+
+  if (count === 0) {
+    throw new Error(
+      `axon-importer: no things printed by executable ${fpath}`,
+    );
   }
 
   if (typeof plugin === "undefined") {
@@ -147,6 +165,15 @@ export async function* readPlugin(
     return;
   }
 
+  console.log('axon-import: not cached')
+
+  let read = false
+  setTimeout(() => {
+    if (!read) {
+      throw new Error(`failed to fetch things from ${fpath} within 10s`)
+    }
+  }, 10_000)
+
   // not stored, invoke the importer and retreive and store results
   for await (
     const thing of readExecutable(
@@ -154,6 +181,7 @@ export async function* readPlugin(
       importerOpts.concat(`--fetch`),
     )
   ) {
+    read = true
     knowledge.addThing(thing);
     yield thing;
   }

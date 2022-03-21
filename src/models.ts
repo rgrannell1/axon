@@ -7,12 +7,6 @@
 import Ajv from "https://esm.sh/ajv";
 import axonSchema from "../schemas/axon.json" assert { type: "json" };
 
-const axonSchemaAvj = (new Ajv({
-  allowMatchingProperties: true,
-})).addSchema(axonSchema, "axon");
-
-const axonThingChecker: any = axonSchemaAvj.getSchema("axon#Axon/Thing");
-
 // Axon/Thing.
 export type AxonThing = {
   id: string;
@@ -26,6 +20,7 @@ export type AxonThing = {
 
 let get = Symbol("get");
 let parents = Symbol("parents");
+let triplify = Symbol("triplify");
 
 const axonThingMethods = {
   [get](field: string) {
@@ -45,19 +40,27 @@ const axonThingMethods = {
   },
 };
 
+const axonSchemaAvj = (new Ajv({
+  allowMatchingProperties: true,
+})).addSchema(axonSchema, "axon");
+
+const axonThingChecker: any = axonSchemaAvj.getSchema("axon#Axon/Thing");
+
 export const Thing = (val: any): AxonThing => {
+  if (typeof val !== 'object') {
+    throw new TypeError('attempted to convert string, requires object')
+  }
+
   const valid = axonThingChecker(val);
 
   if (!valid) {
-    console.error(valid.errors);
+    console.error(axonThingChecker.errors);
     throw new TypeError("invalid thing");
   }
 
   // assign a few methods to the object
   return Object.assign(Object.create(axonThingMethods), val);
 };
-
-// TODO re-add axonschema
 
 export class Subsumptions {
   graph: Record<string, Set<string>>;

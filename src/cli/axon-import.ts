@@ -50,6 +50,6 @@ export async function main(argv: string[]) {
 
   // grab entities using a generic reader to try extract entities from the file
   for await (const thing of Readers.read(from, args, knowledge)) {
-    console.log(thing);
+    console.log(JSON.stringify(thing, null, 2));
   }
 }

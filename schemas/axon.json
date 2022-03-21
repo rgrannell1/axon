@@ -14,7 +14,10 @@
       "$id": "#Axon/Schema/TargetSingleton",
       "title": "The receiver of a relationship.",
       "items": {
-        "type": "string"
+        "oneOf": [
+          { "type": "string" },
+          { "type": "number" }
+        ]
       },
       "minItems": 1,
       "maxItems": 1
@@ -27,7 +30,10 @@
       "title": "The receiver of a relationship, and the concept that subsumes it.",
       "$id": "#Axon/Schema/TargetPair",
       "items": {
-        "type": "string"
+        "oneOf": [
+          { "type": "string" },
+          { "type": "number" }
+        ]
       },
       "minItems": 2,
       "maxItems": 2
