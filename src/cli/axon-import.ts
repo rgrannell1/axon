@@ -28,7 +28,7 @@ Options:
 `;
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
-import { Constants, Models, Readers } from "../../mod.ts";
+import { Constants, Models, Readers, Writers } from "../../mod.ts";
 
 /**
  * Import entities into a data-sink
@@ -49,7 +49,5 @@ export async function main(argv: string[]) {
   }
 
   // grab entities using a generic reader to try extract entities from the file
-  for await (const thing of Readers.read(from, args, knowledge)) {
-    console.log(JSON.stringify(thing, null, 2));
-  }
+  await Writers.write(args['--to'], Readers.read(from, args, knowledge));
 }

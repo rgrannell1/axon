@@ -47,8 +47,8 @@ const axonSchemaAvj = (new Ajv({
 const axonThingChecker: any = axonSchemaAvj.getSchema("axon#Axon/Thing");
 
 export const Thing = (val: any): AxonThing => {
-  if (typeof val !== 'object') {
-    throw new TypeError('attempted to convert string, requires object')
+  if (typeof val !== "object") {
+    throw new TypeError("attempted to convert string, requires object");
   }
 
   const valid = axonThingChecker(val);
@@ -193,10 +193,12 @@ export class Knowledge {
     const concepts = this.subsumptions.record(thing);
 
     for (const schema of this.schemas(concepts)) {
-      const valid = schema(thing)
+      const valid = schema(thing);
       if (!valid) {
-        console.log(schema.errors)
-        throw new TypeError(`thing with concepts [${concepts}] did not match schema, see above errors.`)
+        console.error(schema.errors);
+        throw new TypeError(
+          `thing with concepts [${concepts}] did not match schema, see above errors.`,
+        );
       }
     }
   }

@@ -58,7 +58,7 @@ async function* readExecutable(
     plugin.status(),
     plugin.output(),
     plugin.stderrOutput(),
-  ])
+  ]);
 
   console.error(`axon-inport: calling plugin ${fpath}\n`);
 
@@ -121,14 +121,14 @@ export async function* readPlugin(
   }
 
   // call the plugin script and see if we get an importer plugin in response
-  let count = 0
+  let count = 0;
   for await (
     const thing of readExecutable(
       fpath,
       importerOpts.concat("--plugin"),
     )
   ) {
-    ++count
+    ++count;
     knowledge.addThing(thing);
     if (knowledge.subsumptions.is(thing.id, "Axon/Plugin/Importer")) {
       plugin = thing;
@@ -161,18 +161,18 @@ export async function* readPlugin(
 
   // yes, this import is already stored in the exporter (unless the cache is lying)
   if (pluginCache && pluginCache.hasOwnProperty(cacheKey)) {
-    console.log("already present!");
+    console.error("already present!");
     return;
   }
 
-  console.log('axon-import: not cached')
+  console.error("axon-import: not cached");
 
-  let read = false
+  let read = false;
   setTimeout(() => {
     if (!read) {
-      throw new Error(`failed to fetch things from ${fpath} within 10s`)
+      throw new Error(`failed to fetch things from ${fpath} within 10s`);
     }
-  }, 10_000)
+  }, 10_000);
 
   // not stored, invoke the importer and retreive and store results
   for await (
@@ -181,7 +181,7 @@ export async function* readPlugin(
       importerOpts.concat(`--fetch`),
     )
   ) {
-    read = true
+    read = true;
     knowledge.addThing(thing);
     yield thing;
   }
