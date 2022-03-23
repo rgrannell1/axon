@@ -4,10 +4,10 @@
  *
  */
 
-import { Models } from "../mod.ts";
 import { parse as yamlParse } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
 import { readAll } from "https://deno.land/std/streams/conversion.ts";
 
+import * as Models from "./models.ts";
 import * as Sqlite from "./sqlite.ts";
 import * as Constants from "./constants.ts";
 
@@ -73,7 +73,9 @@ async function* readExecutable(
         try {
           var lineObject = JSON.parse(line);
         } catch (err) {
-          console.error(`axon-readers: failed to parse following thing as JSON`);
+          console.error(
+            `axon-readers: failed to parse following thing as JSON`,
+          );
           console.error(line);
           throw err;
         }
@@ -157,7 +159,7 @@ export async function* readPlugin(
   }
 
   // check if the current thing is cached
-  const topic = args['--topic']
+  const topic = args["--topic"];
   const importCache = await Sqlite.readCache(Constants.AXON_DB);
   const cacheKey = importCache[topic];
 
@@ -231,7 +233,9 @@ export async function* read(
           yield thing;
         }
       } else {
-        throw new Error(`axon-readers: do not know how to import from ${fpath}`);
+        throw new Error(
+          `axon-readers: do not know how to import from ${fpath}`,
+        );
       }
     } finally {
       Deno.close(srcConn.rid);

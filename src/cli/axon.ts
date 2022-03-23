@@ -7,14 +7,16 @@ Description:
   Axon
 
 Commands:
-  import             Import triples from an external resource or script into a data-sink
+  import             Import entities from an external resource or script into sqlite.
+  export             Export triples or entities in multiple formats.
 `;
 
 const commands: Record<string, string> = {
   import: "./axon-import.ts",
+  export: "./axon-export.ts",
 };
 
-const command = Deno.args[0];
+const [command] = Deno.args;
 
 if (commands.hasOwnProperty(command)) {
   const mod = await import(commands[command]);

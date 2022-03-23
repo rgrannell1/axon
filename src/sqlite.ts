@@ -130,3 +130,14 @@ export async function writeTopic(
     await writeCache(fpath, topic, cacheKey[0])
   }
 }
+
+export async function* Read(
+  fpath: string,
+  search: string
+) {
+  const db = await init(fpath);
+
+  for await (const row of db.query(search)) {
+    yield new Models.Triple(row[2], row[1], row[3])
+  }
+}

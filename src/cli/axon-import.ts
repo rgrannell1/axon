@@ -4,7 +4,7 @@ Usage:
   axon (-h|--help)
 
 Description:
-  Perform a complete import or update from an external data-source into a data-sync
+  Perform a complete import or update from an external data-source into a Sqlite triple-store.
 
 Sources:
   Information sources include:
@@ -12,11 +12,8 @@ Sources:
   * Executable scripts that respond to the flags '--plugin' (returning basic plugin information & caching instructions) and '--fetch',
   which yields instances from the script over standard-output. Note; do not log additional message like debugging information to standard-output,
   this will interfere with transmission of data.
-  * JSON files in triple or instance format
-  * JSONL files in triple instance format
-
-Target:
-  * Sqlite database
+  * JSON files in instance format
+  * JSONL files in instance format
 
 Arguments:
   Additonal options can be provided to subprocesses in the format "importer.some-long-flag-name=some-value" and "exporter.
