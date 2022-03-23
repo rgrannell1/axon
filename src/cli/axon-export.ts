@@ -1,6 +1,6 @@
 export const AXON_CLI = `
 Usage:
-  axon export [--triples|--entities] [--yaml|--json|--jsonl|--csv] [--search <str>|--topic <str>]
+  axon export [--triples|--entities] [--yaml|--json|--jsonl|--csv] (--search <str>)
   axon (-h|--help)
 
 Description:
@@ -22,11 +22,12 @@ Options:
   --jsonl           Write entities or triples as jsonl
   --csv             Write entities or triples as csv
   --search <src>    A SQL search for entities to return.
-  --topic <src>     A topic.
 `;
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
-import { Constants, Models, Readers, Sqlite } from "../../mod.ts";
+import {stringify as yamlStringify} from 'https://deno.land/std@0.82.0/encoding/yaml.ts';
+
+import { Constants, Models, Sqlite } from "../../mod.ts";
 const { FileFormats, EntityFormat } = Constants;
 
 const DBPATH = "./AXON_DB.sqlite";
@@ -58,10 +59,16 @@ export async function main(argv: string[]) {
     entityFormat = EntityFormat.ENTITIES;
   }
 
+  // print out data
+
   if (fileFormat === FileFormats.JSON) {
     console.log('[')
   }
   let first = true
+
+  if (fileFormat === FileFormats.CSV) {
+    console.log(['src', 'rel', 'tgt'].join(','))
+  }
 
   for await (const triple of Sqlite.Read(DBPATH, args["--search"])) {
     if (fileFormat === FileFormats.JSONL) {
@@ -72,6 +79,14 @@ export async function main(argv: string[]) {
       first
       ? console.log(JSON.stringify(triple))
       : console.log(',' + JSON.stringify(triple))
+    }
+
+    if (fileFormat === FileFormats.YAML) {
+      console.log(yamlStringify([triple] as any))
+    }
+
+    if (fileFormat === FileFormats.CSV) {
+      console.log([`"${triple.src}"`, `"${triple.rel}"`, `"${triple.tgt}"`].join(','))
     }
 
     first = false
