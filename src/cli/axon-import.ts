@@ -23,12 +23,14 @@ Arguments:
   some-long-flag-name=some-value" respectively.
 
 Options:
+  --topic <src>      A topic.
   --from <src>       An importable data-source.
-  --to <tgt>         An exportable data-sink. Optional, defaults to Axon's own sqlite database
 `;
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
-import { Constants, Models, Readers, Writers } from "../../mod.ts";
+import { Constants, Models, Readers, Sqlite } from "../../mod.ts";
+
+const DBPATH = "./AXON_DB.sqlite";
 
 /**
  * Import entities into a data-sink
@@ -48,6 +50,9 @@ export async function main(argv: string[]) {
     }
   }
 
-  // grab entities using a generic reader to try extract entities from the file
-  await Writers.write(args['--to'], Readers.read(from, args, knowledge));
+  return Sqlite.writeTopic(
+    DBPATH,
+    args["--topic"],
+    Readers.read(from, args, knowledge),
+  );
 }

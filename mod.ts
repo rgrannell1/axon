@@ -1,10 +1,5 @@
-import { createHash } from "https://deno.land/std/hash/mod.ts";
-
-export const id = (...args: string[]) => {
-  return `sha256-${createHash("sha256").update(args.join(".")).toString()}`;
-};
-
+export { id } from "./src/utils.ts";
 export * as Models from "./src/models.ts";
 export * as Constants from "./src/constants.ts";
 export * as Readers from "./src/readers.ts";
-export * as Writers from "./src/writers.ts";
+export * as Sqlite from "./src/sqlite.ts";

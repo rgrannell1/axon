@@ -33,7 +33,7 @@ export async function* readYaml(reader: Deno.Reader): Models.ThingStream {
   const result = await yamlParse(content);
 
   for (const val of Array.isArray(result) ? result : [result]) {
-    yield Models.Thing(val);
+    yield new Models.Thing(val);
   }
 }
 
@@ -76,7 +76,7 @@ async function* readExecutable(
         }
 
         try {
-          const thing = Models.Thing(lineObject);
+          const thing = new Models.Thing(lineObject);
           yield thing;
         } catch (err) {
           console.error(`axon-import: failed to validate following thing`);
@@ -157,7 +157,7 @@ export async function* readPlugin(
   const importCache = await Sqlite.readCache(Constants.AXON_DB);
   const pluginCache = importCache[plugin.id];
 
-  const cacheKey = (plugin as any).cache_key[0]; //fix
+  const cacheKey = (plugin as any).cache_key; //[0]; //fix
 
   // yes, this import is already stored in the exporter (unless the cache is lying)
   if (pluginCache && pluginCache.hasOwnProperty(cacheKey)) {

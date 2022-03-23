@@ -6,61 +6,96 @@
 // check json schema using
 import Ajv from "https://esm.sh/ajv";
 import axonSchema from "../schemas/axon.json" assert { type: "json" };
+import { id } from "./utils.ts";
 
-// Axon/Thing.
-export type AxonThing = {
-  id: string;
-  is?: string | [string[]];
-  includes?: [string[]];
-  forall?: string;
-} & {
-  [key: string]: string | string[] | (string | [string] | [string, string])[];
-  [method: symbol]: any;
-};
-
-let get = Symbol("get");
-let parents = Symbol("parents");
-let triplify = Symbol("triplify");
-
-const axonThingMethods = {
-  [get](field: string) {
-    if (!(field in this)) {
-      return [];
-    }
-
-    if (Array.isArray(this[field as any])) {
-      return this[field as any];
-    } else {
-      return [this[field as any]];
-    }
-  },
-  [parents](): Set<string> {
-    const part: any = this[get]("is");
-    return new Set(part);
-  },
-};
+type entityType = string | number | (string | number | (string | number)[])[];
 
 const axonSchemaAvj = (new Ajv({
   allowMatchingProperties: true,
 })).addSchema(axonSchema, "axon");
 
+export class Triple {
+  src: any;
+  rel: any;
+  tgt: any;
+
+  constructor(src: any, rel: any, tgt: any) {
+    for (const bit of [src, rel, tgt]) {
+      if (Array.isArray(bit)) {
+        throw new TypeError(
+          `triple cannot contain array ${JSON.stringify([src, rel, tgt])}`,
+        );
+      }
+    }
+
+    this.src = src;
+    this.rel = rel;
+    this.tgt = tgt;
+  }
+
+  hash() {
+    return id(this.src, this.rel, this.tgt);
+  }
+}
+
 const axonThingChecker: any = axonSchemaAvj.getSchema("axon#Axon/Thing");
 
-export const Thing = (val: any): AxonThing => {
-  if (typeof val !== "object") {
-    throw new TypeError("attempted to convert string, requires object");
+export class Thing {
+  data: Record<string, entityType>;
+  constructor(data: any) {
+    if (typeof data !== "object") {
+      throw new TypeError("attempted to convert string, requires object");
+    }
+
+    const valid = axonThingChecker(data);
+
+    if (!valid) {
+      console.error(axonThingChecker.errors);
+      throw new TypeError("invalid thing");
+    }
+
+    this.data = data;
   }
 
-  const valid = axonThingChecker(val);
+  get(prop: string): any {
+    const val = this.data[prop];
 
-  if (!valid) {
-    console.error(axonThingChecker.errors);
-    throw new TypeError("invalid thing");
+    if (typeof val === "string") {
+      return [val];
+    } else {
+      return val;
+    }
   }
 
-  // assign a few methods to the object
-  return Object.assign(Object.create(axonThingMethods), val);
-};
+  has(prop: string): boolean {
+    return this.data.hasOwnProperty(prop);
+  }
+
+  get id(): string {
+    return this.data.id as string;
+  }
+
+  parents() {
+    return new Set(this.get("is") as string[]);
+  }
+
+  *triples() {
+    for (const [rel, tgt] of Object.entries(this.data)) {
+      if (Array.isArray(tgt)) {
+        for (const bit of tgt) {
+          if (Array.isArray(bit)) {
+            yield new Triple(bit[0], "is", bit[1]);
+            yield new Triple(this.id, rel, bit[0]);
+          } else {
+            yield new Triple(this.id, rel, bit);
+          }
+        }
+      } else {
+        yield new Triple(this.id, rel, tgt);
+      }
+    }
+  }
+}
 
 export class Subsumptions {
   graph: Record<string, Set<string>>;
@@ -85,12 +120,14 @@ export class Subsumptions {
     }
   }
 
-  record(thing: AxonThing) {
-    for (const parent of thing[parents]()) {
+  record(thing: Thing) {
+    for (const parent of thing.parents()) {
       this.add(thing.id, parent);
     }
 
-    this.addSchema(thing.id, thing[get]("schema"));
+    if (thing.has("schema")) {
+      this.addSchema(thing.id, thing.get("schema"));
+    }
 
     return this.subsumedBy(thing.id);
   }
@@ -189,11 +226,11 @@ export class Knowledge {
     return relevantSchemas;
   }
 
-  addThing(thing: AxonThing) {
+  addThing(thing: Thing) {
     const concepts = this.subsumptions.record(thing);
 
     for (const schema of this.schemas(concepts)) {
-      const valid = schema(thing);
+      const valid = schema(thing.data);
       if (!valid) {
         console.error(schema.errors);
         throw new TypeError(
@@ -204,4 +241,4 @@ export class Knowledge {
   }
 }
 
-export type ThingStream = AsyncGenerator<AxonThing, any, any>;
+export type ThingStream = AsyncGenerator<Thing, any, any>;
