@@ -60,7 +60,10 @@ async function* readExecutable(
     plugin.stderrOutput(),
   ]);
 
-  console.error(`axon-inport: calling plugin ${fpath}\n`);
+  const errorString = new TextDecoder().decode(rawError);
+  console.log(errorString);
+
+  console.error(`axon-readers: reading triples from plugin ${fpath}`);
 
   if (code.code === 0) {
     const content = new TextDecoder().decode(rawOutput);
@@ -70,7 +73,7 @@ async function* readExecutable(
         try {
           var lineObject = JSON.parse(line);
         } catch (err) {
-          console.error(`axon-import: failed to parse following thing as JSON`);
+          console.error(`axon-readers: failed to parse following thing as JSON`);
           console.error(line);
           throw err;
         }
@@ -79,7 +82,7 @@ async function* readExecutable(
           const thing = new Models.Thing(lineObject);
           yield thing;
         } catch (err) {
-          console.error(`axon-import: failed to validate following thing`);
+          console.error(`axon-readers: failed to validate following thing`);
           console.error(line);
           throw err;
         }
@@ -164,13 +167,6 @@ export async function* readPlugin(
     return;
   }
 
-  let read = false;
-  setTimeout(() => {
-    if (!read) {
-      throw new Error(`failed to fetch things from ${fpath} within 10s`);
-    }
-  }, 10_000);
-
   // not stored, invoke the importer and retreive and store results
   for await (
     const thing of readExecutable(
@@ -178,7 +174,6 @@ export async function* readPlugin(
       importerOpts.concat(`--fetch`),
     )
   ) {
-    read = true;
     knowledge.addThing(thing);
     yield thing;
   }
@@ -203,7 +198,7 @@ export async function* read(
     var stat = await Deno.stat(fpath);
   } catch (err) {
     if (err instanceof Deno.errors.NotFound) {
-      throw new Error(`axon-import: could not find ${fpath}`);
+      throw new Error(`axon-readers: could not find ${fpath}`);
     } else {
       throw err;
     }
@@ -211,7 +206,7 @@ export async function* read(
 
   if (!stat.isFile) {
     throw new Error(
-      `axon-import: can only import files, ${fpath} was not a file.`,
+      `axon-readers: can only import files, ${fpath} was not a file.`,
     );
   }
 
@@ -236,7 +231,7 @@ export async function* read(
           yield thing;
         }
       } else {
-        throw new Error(`axon-import: do not know how to import from ${fpath}`);
+        throw new Error(`axon-readers: do not know how to import from ${fpath}`);
       }
     } finally {
       Deno.close(srcConn.rid);

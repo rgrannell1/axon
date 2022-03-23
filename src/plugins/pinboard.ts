@@ -35,7 +35,7 @@ async function getLastUpdate(key: string): Promise<string> {
  */
 async function getBookmarks(key: string): Promise<void> {
   let offset = 0;
-  const size = 5;
+  const size = 50;
 
   while (true) {
     const jsonResponse = await fetch(
@@ -56,7 +56,7 @@ async function getBookmarks(key: string): Promise<void> {
 
       console.log(JSON.stringify(thing));
     }
-    break;
+
     if (jsonData.length === 0) {
       break;
     }
@@ -89,6 +89,7 @@ const main = async () => {
   if (flags.plugin) {
     console.log(JSON.stringify(plugin));
   } else if (flags.fetch) {
+    console.log(JSON.stringify(plugin));
     await getBookmarks(PINBOARD_API_KEY);
   } else {
     console.log(JSON.stringify(Deno.args));
@@ -97,5 +98,6 @@ const main = async () => {
 };
 
 main().catch((err) => {
-  throw err;
+  console.error(err);
+  Deno.exit(1);
 });
