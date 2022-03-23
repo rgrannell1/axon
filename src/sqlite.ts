@@ -16,10 +16,9 @@ async function init(fpath: string): Promise<DB> {
   const tables = [
     `create table if not exists ${Tables.CACHE} (
       topic         text not null,
-      exportPath    text not null,
       value         text not null,
 
-      primary key(topic, exportPath)
+      primary key(topic)
     )`,
   ];
 
@@ -32,23 +31,17 @@ async function init(fpath: string): Promise<DB> {
 
 export async function readCache(
   fpath: string,
-): Promise<Record<string, Record<string, string>>> {
+): Promise<Record<string, string>> {
   const db = await init(fpath);
 
   try {
-    const cache: Record<string, Record<string, string>> = {};
+    const cache: Record<string, string> = {};
     for (
-      const [topic, exportPath, value] of db.query(
-        `select topic, exportPath, value from ${Tables.CACHE}`,
+      const [topic, value] of db.query(
+        `select topic, value from ${Tables.CACHE}`,
       )
     ) {
-      if (!cache.hasOwnProperty(topic as string)) {
-        cache[topic as string] = {
-          [exportPath as string]: value as string,
-        };
-      } else {
-        cache[topic as string][exportPath as string] = value as string;
-      }
+      cache[topic as string] = value as string;
     }
 
     return cache;
@@ -66,7 +59,7 @@ export async function writeCache(
 
   try {
     await db.query(
-      `insert or replace into ${Tables.CACHE} (topic, value) values (?)`,
+      `insert or replace into ${Tables.CACHE} (topic, value) values (?, ?)`,
       [topic, value],
     );
   } finally {
@@ -76,7 +69,6 @@ export async function writeCache(
 
 export async function addTopic(fpath: string, topic: string): Promise<void> {
   const db = await init(fpath);
-  [];
 
   await db.query(`create table if not exists ${topic} (
     hash          text not null,
@@ -103,7 +95,13 @@ export async function writeTopic(
   const db = await init(fpath);
   const hashSet: Set<string> = new Set([]);
 
+  let cacheKey
+
   for await (const thing of things) {
+    if (thing.parents().has('Axon/Plugin/Importer')) {
+      cacheKey = thing.get('cache_key')
+    }
+
     for (const triple of thing.triples()) {
       const hash = triple.hash();
       hashSet.add(hash);
@@ -128,5 +126,7 @@ export async function writeTopic(
     }
   }
 
-  // TODO delete by disjunction
+  if (cacheKey) {
+    await writeCache(fpath, topic, cacheKey[0])
+  }
 }

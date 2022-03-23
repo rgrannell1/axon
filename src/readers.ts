@@ -154,18 +154,15 @@ export async function* readPlugin(
   }
 
   // check if the current thing is cached
+  const topic = args['--topic']
   const importCache = await Sqlite.readCache(Constants.AXON_DB);
-  const pluginCache = importCache[plugin.id];
-
-  const cacheKey = (plugin as any).cache_key; //[0]; //fix
+  const cacheKey = importCache[topic];
 
   // yes, this import is already stored in the exporter (unless the cache is lying)
-  if (pluginCache && pluginCache.hasOwnProperty(cacheKey)) {
-    console.error("already present!");
+  if (cacheKey) {
+    console.error(`axon-reader: results for ${topic} already up to date.`);
     return;
   }
-
-  console.error("axon-import: not cached");
 
   let read = false;
   setTimeout(() => {
