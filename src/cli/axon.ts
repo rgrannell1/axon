@@ -1,3 +1,6 @@
+#!/bin/sh
+//bin/true; exec /home/rg/.deno/bin/deno run -A "$0" "$@"
+
 export const AXON_CLI = `
 Usage:
   axon <command> [options] [<args>...]

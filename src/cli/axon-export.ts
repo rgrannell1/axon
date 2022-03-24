@@ -1,3 +1,6 @@
+#!/bin/sh
+//bin/true; exec /home/rg/.deno/bin/deno run -A "$0" "$@"
+
 export const AXON_CLI = `
 Usage:
   axon export --entities [--yaml|--json|--jsonl] (--topics <str>)
@@ -10,10 +13,10 @@ Description:
 Targets:
   Enties or triples can be exported  to the following formats.
 
-  * Yaml files
+  * Csv files
   * Json files
   * Jsonl files
-  * Csv files
+  * Yaml files
 
 Options:
   --triples         Export in triple-format
@@ -28,6 +31,8 @@ Options:
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
 import { stringify as yamlStringify } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
 
+import { fileFormat } from '../utils.ts';
+
 import { Constants, Sqlite } from "../../mod.ts";
 const { FileFormats } = Constants;
 
@@ -40,21 +45,12 @@ const { FileFormats } = Constants;
 export async function main(argv: string[]) {
   const args = docopt(AXON_CLI, { argv, allowExtra: true });
 
-  let fileFormat = FileFormats.JSONL;
-  if (args["--yaml"]) {
-    fileFormat = FileFormats.YAML;
-  } else if (args["--json"]) {
-    fileFormat = FileFormats.JSON;
-  } else if (args["--jsonl"]) {
-    fileFormat = FileFormats.JSONL;
-  } else if (args["--csv"]) {
-    fileFormat = FileFormats.CSV;
-  }
+  let fmt = fileFormat(args);
 
   if (args["--triples"]) {
-    await printTriples(fileFormat, args);
+    await printTriples(fmt, args);
   } else {
-    await printEntities(fileFormat, args);
+    await printEntities(fmt, args);
   }
 }
 
@@ -97,6 +93,9 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
   }
 }
 
+/*
+ * Print entities
+ */
 async function printEntities(fileFormat: any, args: { [k: string]: any }) {
   if (fileFormat === FileFormats.JSON) {
     console.log("[");

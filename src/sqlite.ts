@@ -4,7 +4,7 @@
  */
 
 import { DB } from "https://deno.land/x/sqlite/mod.ts";
-import { Models } from "../mod.ts";
+import * as Models from "./models.ts";
 
 export enum Tables {
   CACHE = "ImportCache",

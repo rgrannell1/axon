@@ -1,6 +1,10 @@
+#!/bin/sh
+//bin/true; exec /home/rg/.deno/bin/deno run -A "$0" "$@"
+
 export const AXON_CLI = `
 Usage:
-  axon import [options] [--] [<suboptions>...]
+  axon import (--from <src>) [--topic <src>] [options] [--] [<suboptions>...]
+  axon import [--topic <src>] [options] [--] - [<suboptions>...]
   axon (-h|--help)
 
 Description:
@@ -14,12 +18,16 @@ Sources:
   this will interfere with transmission of data.
   * JSON files in instance format
   * JSONL files in instance format
+  * Standard input
 
 Arguments:
   Additonal options can be provided to subprocesses in the format "importer.some-long-flag-name=some-value" and "exporter.
   some-long-flag-name=some-value" respectively.
 
 Options:
+  --yaml             Read entities as yaml
+  --json             Read entities as json
+  --jsonl            Read entities as jsonl
   --topic <src>      A topic.
   --from <src>       An importable data-source.
 `;
@@ -35,7 +43,10 @@ import { Constants, Models, Readers, Sqlite } from "../../mod.ts";
  */
 export async function main(argv: string[]) {
   const args = docopt(AXON_CLI, { argv, allowExtra: true });
-  const from = args["--from"];
+  const from = args['-']
+    ? '/dev/stdin'
+    : args["--from"];
+
 
   const knowledge = new Models.Knowledge();
 

@@ -6,7 +6,9 @@
 
 import { parse as yamlParse } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
 import { readAll } from "https://deno.land/std/streams/conversion.ts";
+import {readLines} from "https://deno.land/std/io/bufio.ts";
 
+import { fileFormat } from './utils.ts';
 import * as Models from "./models.ts";
 import * as Sqlite from "./sqlite.ts";
 import * as Constants from "./constants.ts";
@@ -18,7 +20,9 @@ export async function* readJson(reader: Deno.Reader): Models.ThingStream {
 export async function* readJsonStream(
   reader: Deno.Reader,
 ): Models.ThingStream {
-  throw new Error("not implemented");
+  for await(const line of readLines(reader)) {
+    yield new Models.Thing(JSON.parse(line));
+  }
 }
 
 /**
@@ -196,6 +200,7 @@ export async function* read(
   args: any,
   knowledge: Models.Knowledge,
 ): Models.ThingStream {
+
   try {
     var stat = await Deno.stat(fpath);
   } catch (err) {
@@ -206,11 +211,13 @@ export async function* read(
     }
   }
 
-  if (!stat.isFile) {
+  if (!stat.isFile && fpath !== '/dev/stdin') {
     throw new Error(
       `axon-readers: can only import files, ${fpath} was not a file.`,
     );
   }
+
+  const fmt = fileFormat(args, fpath);
 
   if (stat.mode && stat.mode & 0o100) {
     for await (const thing of readPlugin(fpath, args, knowledge)) {
@@ -220,15 +227,15 @@ export async function* read(
     const srcConn = await Deno.open(fpath);
 
     try {
-      if (fpath.toLowerCase().endsWith(".yaml" || ".yml")) {
+      if (fmt === Constants.FileFormats.YAML) {
         for await (const thing of readYaml(srcConn)) {
           yield thing;
         }
-      } else if (fpath.toLowerCase().endsWith(".jsonl")) {
+      } else if (fmt === Constants.FileFormats.JSONL) {
         for await (const thing of readJsonStream(srcConn)) {
           yield thing;
         }
-      } else if (fpath.toLowerCase().endsWith(".json")) {
+      } else if (fmt === Constants.FileFormats.JSON) {
         for await (const thing of readJson(srcConn)) {
           yield thing;
         }

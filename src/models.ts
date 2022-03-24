@@ -40,6 +40,13 @@ export class Triple {
 
 const axonThingChecker: any = axonSchemaAvj.getSchema("axon#Axon/Thing");
 
+
+/**
+ * Things; they have an id, a schema optionally, and relationships to other things.
+ *
+ * @export
+ * @class Thing
+ */
 export class Thing {
   data: Record<string, entityType>;
   constructor(data: any) {
@@ -117,6 +124,13 @@ export class Thing {
   }
 }
 
+
+/**
+ * Learn about subsumptions from provided things
+ *
+ * @export
+ * @class Subsumptions
+ */
 export class Subsumptions {
   graph: Record<string, Set<string>>;
   schemas: Record<string, string>;
@@ -221,8 +235,15 @@ export class Subsumptions {
   }
 }
 
+
+/**
+ * Check things against their schemas, and learn about their
+ * subsumption hierarchy (i.e inheritance chain)
+ *
+ * @export
+ * @class Knowledge
+ */
 export class Knowledge {
-  //  schemas: Record<string, AxonSchema> = {};
   subsumptions = new Subsumptions();
 
   schemas(concepts: Set<string>) {
