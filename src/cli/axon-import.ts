@@ -27,8 +27,6 @@ Options:
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
 import { Constants, Models, Readers, Sqlite } from "../../mod.ts";
 
-const DBPATH = "./AXON_DB.sqlite";
-
 /**
  * Import entities into a data-sink
  *
@@ -48,7 +46,7 @@ export async function main(argv: string[]) {
   }
 
   return Sqlite.writeTopic(
-    DBPATH,
+    Constants.AXON_DB,
     args["--topic"],
     Readers.read(from, args, knowledge),
   );

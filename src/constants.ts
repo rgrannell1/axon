@@ -7,7 +7,9 @@ import { join } from "https://deno.land/std/path/mod.ts";
 
 const __dirname = new URL(".", import.meta.url).pathname;
 
-export const AXON_DB = "./AXON_DB.sqlite";
+const home = Deno.env.get("HOME") as string
+
+export const AXON_DB = join(home, ".axon.sqlite");
 export const AXON_SCHEMAS = [
   join(__dirname, "../schemas/axon.yaml"),
 ];
@@ -17,9 +19,4 @@ export enum FileFormats {
   JSON = "json",
   JSONL = "jsonl",
   CSV = "csv",
-}
-
-export enum EntityFormat {
-  TRIPLES = "triples",
-  ENTITIES = "entities",
 }

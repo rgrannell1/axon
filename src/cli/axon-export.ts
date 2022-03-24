@@ -1,6 +1,7 @@
 export const AXON_CLI = `
 Usage:
-  axon export [--triples|--entities] [--yaml|--json|--jsonl|--csv] (--topics <str>)
+  axon export --entities [--yaml|--json|--jsonl] (--topics <str>)
+  axon export --triples [--yaml|--json|--jsonl|--csv] (--topics <str>)
   axon (-h|--help)
 
 Description:
@@ -20,17 +21,15 @@ Options:
   --yaml            Write entities or triples as yaml
   --json            Write entities or triples as json
   --jsonl           Write entities or triples as jsonl
-  --csv             Write entities or triples as csv
+  --csv             Write triples as csv
   --topics <src>    A SQL search for entities to return.
 `;
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
 import { stringify as yamlStringify } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
 
-import { Constants, Models, Sqlite } from "../../mod.ts";
-const { FileFormats, EntityFormat } = Constants;
-
-const DBPATH = "./AXON_DB.sqlite";
+import { Constants, Sqlite } from "../../mod.ts";
+const { FileFormats } = Constants;
 
 /**
  * Import entities into a data-sink
@@ -69,7 +68,7 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
     console.log(["src", "rel", "tgt"].join(","));
   }
 
-  for await (const triple of Sqlite.ReadTriples(DBPATH, args["--topics"])) {
+  for await (const triple of Sqlite.ReadTriples(Constants.AXON_DB, args["--topics"])) {
     if (fileFormat === FileFormats.JSONL) {
       console.log(JSON.stringify(triple));
     }
@@ -110,7 +109,7 @@ async function printEntities(fileFormat: any, args: { [k: string]: any }) {
     );
   }
 
-  for await (const thing of Sqlite.ReadThings(DBPATH, args["--topics"])) {
+  for await (const thing of Sqlite.ReadThings(Constants.AXON_DB, args["--topics"])) {
     if (fileFormat === FileFormats.JSONL) {
       console.log(JSON.stringify(thing.data));
     }
