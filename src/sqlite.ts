@@ -20,6 +20,11 @@ async function init(fpath: string): Promise<DB> {
 
       primary key(topic)
     )`,
+    `create table if not exists topics (
+      topic         text not null,
+
+      primary key(topic)
+    )`,
   ];
 
   for (const table of tables) {
@@ -62,6 +67,11 @@ export async function writeCache(
       `insert or replace into ${Tables.CACHE} (topic, value) values (?, ?)`,
       [topic, value],
     );
+
+    await db.query(
+      `insert or replace into topics (topic) values (?)`,
+      [topic],
+    );
   } finally {
     db.close();
   }
@@ -74,7 +84,7 @@ export async function addTopic(fpath: string, topic: string): Promise<void> {
     hash          text not null,
     src           text not null,
     rel           text not null,
-    target        text not null,
+    tgt           text not null,
     insert_date   text not null,
 
     primary key(hash)
@@ -113,7 +123,7 @@ export async function writeTopic(
       if (result[0][0] === 0) {
         // insert missing data into database
         await db.query(
-          `insert into ${topic} (hash, rel, src, target, insert_date) values (?, ?, ?, ?, ?)`,
+          `insert into ${topic} (hash, rel, src, tgt, insert_date) values (?, ?, ?, ?, ?)`,
           [
             hash,
             triple.src,

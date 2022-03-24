@@ -16,8 +16,8 @@ flowchart TB
       library[Axon Library]
       schemas[Axon Schema]
     end
-    click AxonCore "https://github.com/rgrannell1/axon/tree/main/src" "axon source-code"
 
+    sqlite[(Sqlite Cache)] -.- AxonCore
     yourscripts[Your Scripts] -.- AxonCore
     pbscript[Import + Export Script] -.- AxonCore
   end
@@ -44,15 +44,6 @@ flowchart TB
 
     Opts -.- Rest
 
-  end
-
-  CLIs <==>|data| Storage
-
-  subgraph Storage[Storage Choices]
-    external_db[(Your DBs)]
-    axon_db[(Axon DB)]
-
-    plain_file>plain file]
   end
 
   subgraph Sources[Your data]
