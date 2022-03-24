@@ -46,12 +46,12 @@ async function getBookmarks(key: string): Promise<void> {
     for (const bookmark of jsonData) {
       const thing = {
         id: id(bookmark.href, bookmark.time),
-        from: ["Pinboard", "BookmarkSource"],
+        from: [["Pinboard", "BookmarkSource"]],
         is: "PinboardBookmark",
-        url: [bookmark.href, "URL"],
-        description: [bookmark.description, "Description"],
-        hash: [bookmark.hash, "Hash"],
-        date: [bookmark.time, "Date"],
+        url: [[bookmark.href, "URL"]],
+        description: [[bookmark.description, "Description"]],
+        hash: [[bookmark.hash, "Hash"]],
+        date: [[bookmark.time, "Date"]],
       };
 
       console.log(JSON.stringify(thing));
@@ -79,8 +79,8 @@ const main = async () => {
     is: [
       "Axon/Plugin/Importer",
     ],
-    cache_key: [last_update_time, "Identifier"],
-    date: [new Date().toISOString(), "Date"],
+    cache_key: [[last_update_time, "Identifier"]],
+    date: [[new Date().toISOString(), "Date"]],
     schemas: [
       ["/home/rg/Code/deno-axon/src/plugins/pinboard.yaml", "URL"],
     ],

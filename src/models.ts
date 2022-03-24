@@ -51,10 +51,30 @@ export class Thing {
 
     if (!valid) {
       console.error(axonThingChecker.errors);
+      console.error(JSON.stringify(data, null, 2));
       throw new TypeError("invalid thing");
     }
 
     this.data = data;
+  }
+
+  static fromTriples(triples: Triple[]): any {
+    const data: Record<string, any> = {};
+
+    for (const triple of triples) {
+      data.id = triple.src;
+
+      if (!data.hasOwnProperty(triple.rel)) {
+        data[triple.rel] = [triple.tgt];
+      } else {
+        if (triple.rel === "id") {
+          continue;
+        }
+        data[triple.rel].push(triple.tgt);
+      }
+    }
+
+    return new Thing(data);
   }
 
   get(prop: string): any {

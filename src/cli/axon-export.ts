@@ -1,6 +1,6 @@
 export const AXON_CLI = `
 Usage:
-  axon export [--triples|--entities] [--yaml|--json|--jsonl|--csv] (--search <str>)
+  axon export [--triples|--entities] [--yaml|--json|--jsonl|--csv] (--topics <str>)
   axon (-h|--help)
 
 Description:
@@ -21,11 +21,11 @@ Options:
   --json            Write entities or triples as json
   --jsonl           Write entities or triples as jsonl
   --csv             Write entities or triples as csv
-  --search <src>    A SQL search for entities to return.
+  --topics <src>    A SQL search for entities to return.
 `;
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
-import {stringify as yamlStringify} from 'https://deno.land/std@0.82.0/encoding/yaml.ts';
+import { stringify as yamlStringify } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
 
 import { Constants, Models, Sqlite } from "../../mod.ts";
 const { FileFormats, EntityFormat } = Constants;
@@ -52,47 +52,83 @@ export async function main(argv: string[]) {
     fileFormat = FileFormats.CSV;
   }
 
-  let entityFormat = EntityFormat.ENTITIES;
   if (args["--triples"]) {
-    entityFormat = EntityFormat.TRIPLES;
-  } else if (args["--entities"]) {
-    entityFormat = EntityFormat.ENTITIES;
+    await printTriples(fileFormat, args);
+  } else {
+    await printEntities(fileFormat, args);
   }
+}
 
-  // print out data
-
+async function printTriples(fileFormat: any, args: { [k: string]: any }) {
   if (fileFormat === FileFormats.JSON) {
-    console.log('[')
+    console.log("[");
   }
-  let first = true
+  let first = true;
 
   if (fileFormat === FileFormats.CSV) {
-    console.log(['src', 'rel', 'tgt'].join(','))
+    console.log(["src", "rel", "tgt"].join(","));
   }
 
-  for await (const triple of Sqlite.Read(DBPATH, args["--search"])) {
+  for await (const triple of Sqlite.ReadTriples(DBPATH, args["--topics"])) {
     if (fileFormat === FileFormats.JSONL) {
-      console.log(JSON.stringify(triple))
+      console.log(JSON.stringify(triple));
     }
 
     if (fileFormat === FileFormats.JSON) {
       first
-      ? console.log(JSON.stringify(triple))
-      : console.log(',' + JSON.stringify(triple))
+        ? console.log(JSON.stringify(triple))
+        : console.log("," + JSON.stringify(triple));
     }
 
     if (fileFormat === FileFormats.YAML) {
-      console.log(yamlStringify([triple] as any))
+      console.log(yamlStringify([triple] as any));
     }
 
     if (fileFormat === FileFormats.CSV) {
-      console.log([`"${triple.src}"`, `"${triple.rel}"`, `"${triple.tgt}"`].join(','))
+      console.log(
+        [`"${triple.src}"`, `"${triple.rel}"`, `"${triple.tgt}"`].join(","),
+      );
     }
 
-    first = false
+    first = false;
   }
 
   if (fileFormat === FileFormats.JSON) {
-    console.log(']')
+    console.log("]");
+  }
+}
+
+async function printEntities(fileFormat: any, args: { [k: string]: any }) {
+  if (fileFormat === FileFormats.JSON) {
+    console.log("[");
+  }
+  let first = true;
+
+  if (fileFormat === FileFormats.CSV) {
+    throw new Error(
+      `axon-export: Cannot export things in csv format; try exporting with --triples instead`,
+    );
+  }
+
+  for await (const thing of Sqlite.ReadThings(DBPATH, args["--topics"])) {
+    if (fileFormat === FileFormats.JSONL) {
+      console.log(JSON.stringify(thing.data));
+    }
+
+    if (fileFormat === FileFormats.JSON) {
+      first
+        ? console.log(JSON.stringify(thing.data))
+        : console.log("," + JSON.stringify(thing.data));
+    }
+
+    if (fileFormat === FileFormats.YAML) {
+      console.log(yamlStringify([thing.data] as any));
+    }
+
+    first = false;
+  }
+
+  if (fileFormat === FileFormats.JSON) {
+    console.log("]");
   }
 }

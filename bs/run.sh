@@ -2,10 +2,15 @@
 
 source 'bs/env.sh'
 
-PINBOARD_PLUGIN=/home/rg/Code/deno-axon/src/plugins/pinboard.ts
-AIB_PLUGIN=/home/rg/Code/axon-transactions/index.ts
 
-deno run -A src/cli/axon.ts import --topic 'aib_transactions' --from "$AIB_PLUGIN"
-deno run -A src/cli/axon.ts import --topic 'pinboard' --from "$PINBOARD_PLUGIN"
+PINBOARD_PLUGIN="$HOME/Code/deno-axon/src/plugins/pinboard.ts"
+AIB_PLUGIN="$HOME/Code/axon-transactions/index.ts"
+HISTORY_PLUGIN="$HOME/Code/deno-axon/src/plugins/history.ts"
 
-deno run -A src/cli/axon.ts export --search 'select * from aib_transactions'
+AXON="deno run -A src/cli/axon.ts"
+
+$AXON import --topic 'aib_transactions' --from "$AIB_PLUGIN"
+#$AXON import --topic 'pinboard' --from "$PINBOARD_PLUGIN"
+$AXON import --topic 'zsh_history' --from "$HISTORY_PLUGIN" "importer.fpath=$HOME/.zsh_history"
+
+#$AXON export --jsonl --search 'select * from zsh_history'

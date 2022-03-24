@@ -105,11 +105,11 @@ export async function writeTopic(
   const db = await init(fpath);
   const hashSet: Set<string> = new Set([]);
 
-  let cacheKey
+  let cacheKey;
 
   for await (const thing of things) {
-    if (thing.parents().has('Axon/Plugin/Importer')) {
-      cacheKey = thing.get('cache_key')
+    if (thing.parents().has("Axon/Plugin/Importer")) {
+      cacheKey = thing.get("cache_key");
     }
 
     for (const triple of thing.triples()) {
@@ -123,7 +123,7 @@ export async function writeTopic(
       if (result[0][0] === 0) {
         // insert missing data into database
         await db.query(
-          `insert into ${topic} (hash, rel, src, tgt, insert_date) values (?, ?, ?, ?, ?)`,
+          `insert into ${topic} (hash, src, rel, tgt, insert_date) values (?, ?, ?, ?, ?)`,
           [
             hash,
             triple.src,
@@ -137,17 +137,64 @@ export async function writeTopic(
   }
 
   if (cacheKey) {
-    await writeCache(fpath, topic, cacheKey[0])
+    await writeCache(fpath, topic, cacheKey[0]);
   }
 }
 
-export async function* Read(
+export async function* ReadTriples(
   fpath: string,
-  search: string
+  search: string,
 ) {
   const db = await init(fpath);
 
   for await (const row of db.query(search)) {
-    yield new Models.Triple(row[2], row[1], row[3])
+    yield new Models.Triple(row[1], row[2], row[3]);
+  }
+}
+
+export function* matchingTopics(db: DB, topics: string) {
+  const tables = db.query(`select name from sqlite_schema where
+    type ='table' AND
+    name NOT LIKE 'sqlite_%';`);
+
+  const re = new RegExp(topics, "i");
+
+  for (const [table] of tables) {
+    if (table !== "ImportCache" && re.test(table as string)) {
+      yield table;
+    }
+  }
+}
+
+export async function* ReadThings(
+  fpath: string,
+  topics: string,
+) {
+  const db = await init(fpath);
+  const searches = [];
+
+  for (const topic of matchingTopics(db, topics)) {
+    searches.push(`
+    select src,rel,tgt from ${topic}
+    union
+    select tgt as src,'id' as rel,tgt from ${topic}
+    `);
+  }
+
+  const search = searches.join("\nunion\n") + `group by src`;
+
+  let previous: string | undefined = undefined;
+  let triples = [];
+  for await (const row of db.query(search)) {
+    const triple = new Models.Triple(row[0], row[1], row[2]);
+
+    triples.push(triple);
+
+    if (triple.src !== previous) {
+      yield Models.Thing.fromTriples(triples);
+      triples = [];
+    }
+
+    previous = triple.src;
   }
 }
