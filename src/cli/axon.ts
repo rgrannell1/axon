@@ -14,16 +14,18 @@ Commands:
   export             Export triples or entities in multiple formats.
 `;
 
-const commands: Record<string, string> = {
-  import: "./axon-import.ts",
-  export: "./axon-export.ts",
+import {main as axonImport} from './axon-import.ts'
+import {main as axonExport} from './axon-export.ts'
+
+const commands: Record<string, any> = {
+  import: axonImport,
+  export: axonExport,
 };
 
 const [command] = Deno.args;
 
 if (commands.hasOwnProperty(command)) {
-  const mod = await import(commands[command]);
-  await mod.main();
+  await commands[command]();
 } else {
   console.log(AXON_CLI);
   Deno.exit(1);

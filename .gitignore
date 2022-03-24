@@ -1,7 +1,2 @@
-.cache/
-deno-axon
+dist
 bs/env.sh
-my-searches
-personal-scripts/
-AXON_DB.sqlite
-transactions.ts
