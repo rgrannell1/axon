@@ -22,5 +22,6 @@ export enum FileFormats {
 }
 
 export enum Tables {
-  CACHE = "ImportCache",
+  CACHE = "axon_topic_cache",
+  STATE = "axon_topic_state",
 }

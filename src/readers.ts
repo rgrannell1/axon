@@ -175,12 +175,14 @@ export async function* readPlugin(
     return;
   }
 
+  const state = await Sqlite.readState(Constants.AXON_DB, topic);
+  const opts = importerOpts.concat(`--fetch`);
+
+  opts.push(state ? state : '{}');
+
   // not stored, invoke the importer and retreive and store results
   for await (
-    const thing of readExecutable(
-      fpath,
-      importerOpts.concat(`--fetch`),
-    )
+    const thing of readExecutable(fpath, opts)
   ) {
     knowledge.addThing(thing);
     yield thing;

@@ -32,8 +32,8 @@ import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
 import { stringify as yamlStringify } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
 
 import { fileFormat } from "../utils.ts";
-
 import { Constants, Sqlite } from "../../mod.ts";
+
 const { FileFormats } = Constants;
 
 /**

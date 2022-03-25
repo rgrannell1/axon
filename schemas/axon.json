@@ -99,20 +99,11 @@
       "required": ["cache_key", "date"],
       "type": "object"
     },
-
-    "Axon/Plugin/Exporter": {
-      "title": "Axon/Plugin/Exporter",
-      "$id": "#Axon/Plugin/Exporter",
-      "description": "Axon/Plugin/Exporter describes things Axon can write to",
-      "required": ["cached_keys", "date"],
-      "type": "object"
-    },
-
-    "Axon/Plugin/Transformer": {
-      "title": "Axon/Plugin/Transformer",
-      "$id": "#Axon/Plugin/Transformer",
-      "description": "Axon/Plugin/Transformer reads in entities, and deletes them, updates them, or adds new entities",
-      "required": [],
+    "Axon/PluginState": {
+      "title": "Axon/PluginState",
+      "$id": "#Axon/PluginState",
+      "description": "Axon/PluginState describes any state a plugin wishes to store between runs",
+      "required": ["state"],
       "type": "object"
     }
   }

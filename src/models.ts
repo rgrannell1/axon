@@ -279,4 +279,27 @@ export class Knowledge {
   }
 }
 
+/*
+ * Plugin state, which can be stored in Axon
+ *
+ */
+export class State {
+  data: any;
+  constructor(data: string) {
+    try {
+      this.data = JSON.parse(data);
+    } catch (err) {
+      throw new Error(`failed to parse plugin state as JSON\n${data}`);
+    }
+  }
+
+  static load(data: string) {
+    return new State(data);
+  }
+
+  json() {
+    return JSON.stringify(this.data);
+  }
+}
+
 export type ThingStream = AsyncGenerator<Thing, any, any>;

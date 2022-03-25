@@ -17,6 +17,12 @@ async function init(fpath: string): Promise<DB> {
 
       primary key(topic)
     )`,
+    `create table if not exists ${Constants.Tables.STATE} (
+      topic         text not null,
+      state         text not null,
+
+      primary key(topic)
+    )`,
     `create table if not exists topics (
       topic         text not null,
 
@@ -74,6 +80,49 @@ export async function writeCache(
   }
 }
 
+export async function writeState(
+  fpath: string,
+  topic: string,
+  state: any,
+): Promise<void> {
+  const db = await init(fpath);
+
+  try {
+    await db.query(
+      `insert or replace into ${Constants.Tables.STATE} (topic, state) values (?, ?)`,
+      [topic, state],
+    );
+
+    await db.query(
+      `insert or replace into topics (topic) values (?)`,
+      [topic],
+    );
+  } finally {
+    db.close();
+  }
+}
+
+export async function readState(
+  fpath: string,
+  topic: string,
+): Promise<string | undefined> {
+  const db = await init(fpath);
+
+  try {
+    const [match] = db.query(
+      `select topic, state from ${Constants.Tables.STATE} where topic = ?`,
+      [topic],
+    );
+
+    if (match) {
+      const [_, state] = match
+      return state as string;
+    }
+  } finally {
+    db.close();
+  }
+}
+
 export async function addTopic(fpath: string, topic: string): Promise<void> {
   const db = await init(fpath);
 
@@ -108,6 +157,7 @@ export async function writeTopic(
   const now = Date.now(); // here so we have a consistent timestamp for this write
 
   let cacheKey;
+  let state
 
   try {
     // write all things from the input stream
@@ -115,6 +165,10 @@ export async function writeTopic(
       // pull the cache-key from the importer, if present.
       if (thing.parents().has("Axon/Plugin/Importer")) {
         cacheKey = thing.get("cache_key")[0][0];
+      }
+
+      if (thing.parents().has('Axon/PluginState')) {
+        state = thing.get("state")[0];
       }
 
       for (const triple of thing.triples()) {
@@ -143,8 +197,14 @@ export async function writeTopic(
     }
 
     if (cacheKey) {
-      await writeCache(fpath, topic, cacheKey[0]);
+      await writeCache(fpath, topic, cacheKey);
     }
+
+    // write plugin state to storage
+    if (state) {
+      await writeState(fpath, topic, state);
+    }
+
   } finally {
     db.close();
   }
