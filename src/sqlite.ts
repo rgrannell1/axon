@@ -5,16 +5,13 @@
 
 import { DB } from "https://deno.land/x/sqlite/mod.ts";
 import * as Models from "./models.ts";
-
-export enum Tables {
-  CACHE = "ImportCache",
-}
+import * as Constants from "./constants.ts";
 
 async function init(fpath: string): Promise<DB> {
   const db = new DB(fpath);
 
   const tables = [
-    `create table if not exists ${Tables.CACHE} (
+    `create table if not exists ${Constants.Tables.CACHE} (
       topic         text not null,
       value         text not null,
 
@@ -43,7 +40,7 @@ export async function readCache(
     const cache: Record<string, string> = {};
     for (
       const [topic, value] of db.query(
-        `select topic, value from ${Tables.CACHE}`,
+        `select topic, value from ${Constants.Tables.CACHE}`,
       )
     ) {
       cache[topic as string] = value as string;
@@ -64,7 +61,7 @@ export async function writeCache(
 
   try {
     await db.query(
-      `insert or replace into ${Tables.CACHE} (topic, value) values (?, ?)`,
+      `insert or replace into ${Constants.Tables.CACHE} (topic, value) values (?, ?)`,
       [topic, value],
     );
 
@@ -80,64 +77,76 @@ export async function writeCache(
 export async function addTopic(fpath: string, topic: string): Promise<void> {
   const db = await init(fpath);
 
-  await db.query(`create table if not exists ${topic} (
-    hash          text not null,
-    src           text not null,
-    rel           text not null,
-    tgt           text not null,
-    insert_date   text not null,
+  try {
+    await db.query(`create table if not exists ${topic} (
+      hash          text not null,
+      src           text not null,
+      rel           text not null,
+      tgt           text not null,
+      insert_date   text not null,
 
-    primary key(hash)
-  )`);
+      primary key(hash)
+    )`);
 
-  await db.query(
-    `CREATE UNIQUE INDEX IF NOT EXISTS ${topic}_hash ON ${topic} (hash);`,
-  );
+    await db.query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS ${topic}_hash ON ${topic} (hash);`,
+    );
+  } finally {
+    db.close();
+  }
 }
 
 export async function writeTopic(
   fpath: string,
   topic: string,
+  knowledge: Models.Knowledge,
   things: Models.ThingStream,
 ) {
   await addTopic(fpath, topic);
 
   const db = await init(fpath);
-  const hashSet: Set<string> = new Set([]);
+  const now = Date.now(); // here so we have a consistent timestamp for this write
 
   let cacheKey;
 
-  for await (const thing of things) {
-    if (thing.parents().has("Axon/Plugin/Importer")) {
-      cacheKey = thing.get("cache_key");
-    }
-
-    for (const triple of thing.triples()) {
-      const hash = triple.hash();
-      hashSet.add(hash);
-
-      const result = await db.query(
-        `select count(*) as present from ${topic} where ${topic}.hash = ?`,
-        [hash],
-      );
-      if (result[0][0] === 0) {
-        // insert missing data into database
-        await db.query(
-          `insert into ${topic} (hash, src, rel, tgt, insert_date) values (?, ?, ?, ?, ?)`,
-          [
-            hash,
-            triple.src,
-            triple.rel,
-            triple.tgt,
-            Date.now(),
-          ],
-        );
+  try {
+    // write all things from the input stream
+    for await (const thing of things) {
+      // pull the cache-key from the importer, if present.
+      if (thing.parents().has("Axon/Plugin/Importer")) {
+        cacheKey = thing.get("cache_key")[0][0];
       }
-    }
-  }
 
-  if (cacheKey) {
-    await writeCache(fpath, topic, cacheKey[0]);
+      for (const triple of thing.triples()) {
+        const hash = triple.hash();
+
+        const result = await db.query(
+          `select count(*) as present from ${topic} where ${topic}.hash = ?`,
+          [hash],
+        );
+        if (result[0][0] === 0) {
+          // merge things not presently in this topic into the topic
+          await db.query(
+            `insert into ${topic} (hash, src, rel, tgt, insert_date) values (?, ?, ?, ?, ?)`,
+            [
+              hash,
+              triple.src,
+              triple.rel,
+              triple.tgt,
+              now,
+            ],
+          );
+        }
+      }
+
+      // TODO write all subsumption knowledge
+    }
+
+    if (cacheKey) {
+      await writeCache(fpath, topic, cacheKey[0]);
+    }
+  } finally {
+    db.close();
   }
 }
 
@@ -147,8 +156,12 @@ export async function* ReadTriples(
 ) {
   const db = await init(fpath);
 
-  for await (const row of db.query(search)) {
-    yield new Models.Triple(row[1], row[2], row[3]);
+  try {
+    for await (const row of db.query(search)) {
+      yield new Models.Triple(row[1], row[2], row[3]);
+    }
+  } finally {
+    db.close();
   }
 }
 
@@ -171,30 +184,35 @@ export async function* ReadThings(
   topics: string,
 ) {
   const db = await init(fpath);
-  const searches = [];
 
-  for (const topic of matchingTopics(db, topics)) {
-    searches.push(`
-    select src,rel,tgt from ${topic}
-    union
-    select tgt as src,'id' as rel,tgt from ${topic}
-    `);
-  }
+  try {
+    const searches = [];
 
-  const search = searches.join("\nunion\n") + `group by src`;
-
-  let previous: string | undefined = undefined;
-  let triples = [];
-  for await (const row of db.query(search)) {
-    const triple = new Models.Triple(row[0], row[1], row[2]);
-
-    triples.push(triple);
-
-    if (triple.src !== previous) {
-      yield Models.Thing.fromTriples(triples);
-      triples = [];
+    for (const topic of matchingTopics(db, topics)) {
+      searches.push(`
+      select src,rel,tgt from ${topic}
+      union
+      select tgt as src,'id' as rel,tgt from ${topic}
+      `);
     }
 
-    previous = triple.src;
+    const search = searches.join("\nunion\n") + `group by src`;
+
+    let previous: string | undefined = undefined;
+    let triples = [];
+    for await (const row of db.query(search)) {
+      const triple = new Models.Triple(row[0], row[1], row[2]);
+
+      triples.push(triple);
+
+      if (triple.src !== previous) {
+        yield Models.Thing.fromTriples(triples);
+        triples = [];
+      }
+
+      previous = triple.src;
+    }
+  } finally {
+    db.close();
   }
 }

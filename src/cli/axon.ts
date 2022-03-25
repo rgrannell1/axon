@@ -14,8 +14,8 @@ Commands:
   export             Export triples or entities in multiple formats.
 `;
 
-import {main as axonImport} from './axon-import.ts'
-import {main as axonExport} from './axon-export.ts'
+import { main as axonImport } from "./axon-import.ts";
+import { main as axonExport } from "./axon-export.ts";
 
 const commands: Record<string, any> = {
   import: axonImport,

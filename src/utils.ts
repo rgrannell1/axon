@@ -1,12 +1,11 @@
-
 import { createHash } from "https://deno.land/std/hash/mod.ts";
-import * as Constants from "./constants.ts"
+import * as Constants from "./constants.ts";
 
 export const id = (...args: string[]) => {
   return `sha256-${createHash("sha256").update(args.join(".")).toString()}`;
 };
 
-export function fileFormat (args: {[k: string]: any}, fpath: string = '') {
+export function fileFormat(args: { [k: string]: any }, fpath: string = "") {
   if (args["--yaml"]) {
     return Constants.FileFormats.YAML;
   } else if (args["--json"]) {

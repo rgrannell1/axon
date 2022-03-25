@@ -40,7 +40,6 @@ export class Triple {
 
 const axonThingChecker: any = axonSchemaAvj.getSchema("axon#Axon/Thing");
 
-
 /**
  * Things; they have an id, a schema optionally, and relationships to other things.
  *
@@ -123,7 +122,6 @@ export class Thing {
     }
   }
 }
-
 
 /**
  * Learn about subsumptions from provided things
@@ -234,7 +232,6 @@ export class Subsumptions {
     return concepts;
   }
 }
-
 
 /**
  * Check things against their schemas, and learn about their

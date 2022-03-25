@@ -6,9 +6,9 @@
 
 import { parse as yamlParse } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
 import { readAll } from "https://deno.land/std/streams/conversion.ts";
-import {readLines} from "https://deno.land/std/io/bufio.ts";
+import { readLines } from "https://deno.land/std/io/bufio.ts";
 
-import { fileFormat } from './utils.ts';
+import { fileFormat } from "./utils.ts";
 import * as Models from "./models.ts";
 import * as Sqlite from "./sqlite.ts";
 import * as Constants from "./constants.ts";
@@ -20,7 +20,7 @@ export async function* readJson(reader: Deno.Reader): Models.ThingStream {
 export async function* readJsonStream(
   reader: Deno.Reader,
 ): Models.ThingStream {
-  for await(const line of readLines(reader)) {
+  for await (const line of readLines(reader)) {
     yield new Models.Thing(JSON.parse(line));
   }
 }
@@ -167,8 +167,10 @@ export async function* readPlugin(
   const importCache = await Sqlite.readCache(Constants.AXON_DB);
   const cacheKey = importCache[topic];
 
+  const [pluginKey] = plugin.get("cache_key")[0];
+
   // yes, this import is already stored in the exporter (unless the cache is lying)
-  if (cacheKey) {
+  if (cacheKey === pluginKey) {
     console.error(`axon-reader: results for ${topic} already up to date.`);
     return;
   }
@@ -200,7 +202,6 @@ export async function* read(
   args: any,
   knowledge: Models.Knowledge,
 ): Models.ThingStream {
-
   try {
     var stat = await Deno.stat(fpath);
   } catch (err) {
@@ -211,7 +212,7 @@ export async function* read(
     }
   }
 
-  if (!stat.isFile && fpath !== '/dev/stdin') {
+  if (!stat.isFile && fpath !== "/dev/stdin") {
     throw new Error(
       `axon-readers: can only import files, ${fpath} was not a file.`,
     );

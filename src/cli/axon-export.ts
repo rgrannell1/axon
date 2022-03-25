@@ -31,7 +31,7 @@ Options:
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
 import { stringify as yamlStringify } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
 
-import { fileFormat } from '../utils.ts';
+import { fileFormat } from "../utils.ts";
 
 import { Constants, Sqlite } from "../../mod.ts";
 const { FileFormats } = Constants;
@@ -64,7 +64,9 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
     console.log(["src", "rel", "tgt"].join(","));
   }
 
-  for await (const triple of Sqlite.ReadTriples(Constants.AXON_DB, args["--topics"])) {
+  for await (
+    const triple of Sqlite.ReadTriples(Constants.AXON_DB, args["--topics"])
+  ) {
     if (fileFormat === FileFormats.JSONL) {
       console.log(JSON.stringify(triple));
     }
@@ -108,7 +110,9 @@ async function printEntities(fileFormat: any, args: { [k: string]: any }) {
     );
   }
 
-  for await (const thing of Sqlite.ReadThings(Constants.AXON_DB, args["--topics"])) {
+  for await (
+    const thing of Sqlite.ReadThings(Constants.AXON_DB, args["--topics"])
+  ) {
     if (fileFormat === FileFormats.JSONL) {
       console.log(JSON.stringify(thing.data));
     }

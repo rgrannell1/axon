@@ -18,18 +18,19 @@ Sources:
   this will interfere with transmission of data.
   * JSON files in instance format
   * JSONL files in instance format
-  * Standard input
+  * Standard input, in JSON, JSONL, or Yaml.
 
 Arguments:
-  Additonal options can be provided to subprocesses in the format "importer.some-long-flag-name=some-value" and "exporter.
-  some-long-flag-name=some-value" respectively.
+  Additonal options can be provided to subprocesses as an K=V argument "importer.filepath='some-value'", which will be received by
+  the subprocess as a --filepath='some-value' flag.
 
 Options:
   --yaml             Read entities as yaml
   --json             Read entities as json
   --jsonl            Read entities as jsonl
-  --topic <src>      A topic.
-  --from <src>       An importable data-source.
+  --topic <src>      A regular expression for matching topics. [Default: .+]
+  --from <src>       An importable data-source. Will attempt to infer file-type from extension if no format is explicitly
+                       mentioned. Alternatively, use '-' for stdin.
 `;
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
@@ -43,10 +44,7 @@ import { Constants, Models, Readers, Sqlite } from "../../mod.ts";
  */
 export async function main(argv: string[]) {
   const args = docopt(AXON_CLI, { argv, allowExtra: true });
-  const from = args['-']
-    ? '/dev/stdin'
-    : args["--from"];
-
+  const from = args["-"] ? "/dev/stdin" : args["--from"];
 
   const knowledge = new Models.Knowledge();
 
@@ -59,6 +57,7 @@ export async function main(argv: string[]) {
   return Sqlite.writeTopic(
     Constants.AXON_DB,
     args["--topic"],
+    knowledge,
     Readers.read(from, args, knowledge),
   );
 }
