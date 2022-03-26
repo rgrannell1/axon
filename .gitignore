@@ -1,2 +1,3 @@
 dist
 bs/env.sh
+out.jsonl

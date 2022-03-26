@@ -115,7 +115,7 @@ export async function readState(
     );
 
     if (match) {
-      const [_, state] = match
+      const [_, state] = match;
       return state as string;
     }
   } finally {
@@ -157,7 +157,7 @@ export async function writeTopic(
   const now = Date.now(); // here so we have a consistent timestamp for this write
 
   let cacheKey;
-  let state
+  let state;
 
   try {
     // write all things from the input stream
@@ -167,7 +167,7 @@ export async function writeTopic(
         cacheKey = thing.get("cache_key")[0][0];
       }
 
-      if (thing.parents().has('Axon/PluginState')) {
+      if (thing.parents().has("Axon/PluginState")) {
         state = thing.get("state")[0];
       }
 
@@ -204,7 +204,6 @@ export async function writeTopic(
     if (state) {
       await writeState(fpath, topic, state);
     }
-
   } finally {
     db.close();
   }
@@ -232,8 +231,14 @@ export function* matchingTopics(db: DB, topics: string) {
 
   const re = new RegExp(topics, "i");
 
+  const ignored = new Set([
+    Constants.Tables.CACHE,
+    Constants.Tables.STATE,
+    Constants.Tables.TOPICS,
+    "ImportCache",
+  ]);
   for (const [table] of tables) {
-    if (table !== "ImportCache" && re.test(table as string)) {
+    if (!ignored.has(table as any) && re.test(table as string)) {
       yield table;
     }
   }
@@ -248,7 +253,9 @@ export async function* ReadThings(
   try {
     const searches = [];
 
-    for (const topic of matchingTopics(db, topics)) {
+    const matches = matchingTopics(db, topics);
+
+    for (const topic of matches) {
       searches.push(`
       select src,rel,tgt from ${topic}
       union
@@ -260,6 +267,7 @@ export async function* ReadThings(
 
     let previous: string | undefined = undefined;
     let triples = [];
+
     for await (const row of db.query(search)) {
       const triple = new Models.Triple(row[0], row[1], row[2]);
 

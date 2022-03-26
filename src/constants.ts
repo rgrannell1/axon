@@ -24,4 +24,5 @@ export enum FileFormats {
 export enum Tables {
   CACHE = "axon_topic_cache",
   STATE = "axon_topic_state",
+  TOPICS = "topics",
 }

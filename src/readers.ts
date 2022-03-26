@@ -22,9 +22,9 @@ export async function* readJsonStream(
 ): Models.ThingStream {
   for await (const line of readLines(reader)) {
     try {
-      var parsed = JSON.parse(line)
+      var parsed = JSON.parse(line);
     } catch (err) {
-      throw new Error(`axon-reader: failed to parse following line\n${line}`)
+      throw new Error(`axon-reader: failed to parse following line\n${line}`);
     }
     yield new Models.Thing(parsed);
   }
@@ -51,7 +51,7 @@ export async function* readYaml(reader: Deno.Reader): Models.ThingStream {
  *
  * @export
  * @param {string} fpath the file-path supplying things
- * @param {string[]} [flags=[]]
+ * @param {string[]}
  */
 async function* readExecutable(
   fpath: string,
@@ -63,16 +63,13 @@ async function* readExecutable(
     stderr: "piped",
   });
 
-//  const code = await plugin.status()
-// todo non terminating rn
-
   console.error(`axon-readers: reading triples from plugin ${fpath}`);
 
   let count = 0;
   const enc = (str: string) => new TextEncoder().encode(str);
 
   const pid = setInterval(async () => {
-    await Deno.stdout.write(enc(`read triple #${count}\r`))
+    await Deno.stdout.write(enc(`read entity #${count}\r`));
   }, 100);
 
   for await (const line of readLines(plugin.stdout)) {
@@ -91,7 +88,7 @@ async function* readExecutable(
         const thing = new Models.Thing(lineObject);
         yield thing;
       } catch (err) {
-        clearInterval(pid)
+        clearInterval(pid);
         console.error(`axon-readers: failed to validate following thing`);
         console.error(line);
         throw err;
@@ -100,17 +97,17 @@ async function* readExecutable(
 
     count++;
   }
-  console.log('')
+  console.log("");
 
-  const code = await plugin.status()
+  const code = await plugin.status();
   const rawErr = await plugin.stderrOutput();
 
-  clearInterval(pid)
+  clearInterval(pid);
 
   if (code.code !== 0) {
     const errorString = new TextDecoder().decode(rawErr);
     console.error(errorString);
-    throw new Error(`axon-reader: plugin exited with status ${code.code}`)
+    throw new Error(`axon-reader: plugin exited with status ${code.code}`);
   }
 }
 
@@ -184,7 +181,7 @@ export async function* readPlugin(
   const [pluginKey] = plugin.get("cache_key")[0];
 
   // yes, this import is already stored in the exporter (unless the cache is lying)
-  if (cacheKey === pluginKey && !args['--force']) {
+  if (cacheKey === pluginKey && !args["--force"]) {
     console.error(`axon-reader: results for ${topic} already up to date.`);
     return;
   }
@@ -192,7 +189,7 @@ export async function* readPlugin(
   const state = await Sqlite.readState(Constants.AXON_DB, topic);
   const opts = importerOpts.concat(`--fetch`);
 
-  opts.push(state ? state : '{}');
+  opts.push(state ? state : "{}");
 
   // not stored, invoke the importer and retreive and store results
   for await (
