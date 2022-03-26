@@ -3,8 +3,8 @@
 
 export const AXON_CLI = `
 Usage:
-  axon import (--from <src>) [--topic <src>] [options] [--] [<suboptions>...]
-  axon import [--topic <src>] [options] [--] - [<suboptions>...]
+  axon import (--from <src>) [--force] [--topic <src>] [options] [--] [<suboptions>...]
+  axon import [--topic <src>] [--force] [options] [--] - [<suboptions>...]
   axon (-h|--help)
 
 Description:
@@ -25,6 +25,7 @@ Arguments:
   the subprocess as a --filepath='some-value' flag.
 
 Options:
+  --force            Force a refresh on import
   --yaml             Read entities as yaml
   --json             Read entities as json
   --jsonl            Read entities as jsonl

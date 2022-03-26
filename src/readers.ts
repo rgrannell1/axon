@@ -21,7 +21,12 @@ export async function* readJsonStream(
   reader: Deno.Reader,
 ): Models.ThingStream {
   for await (const line of readLines(reader)) {
-    yield new Models.Thing(JSON.parse(line));
+    try {
+      var parsed = JSON.parse(line)
+    } catch (err) {
+      throw new Error(`axon-reader: failed to parse following line\n${line}`)
+    }
+    yield new Models.Thing(parsed);
   }
 }
 
@@ -170,7 +175,7 @@ export async function* readPlugin(
   const [pluginKey] = plugin.get("cache_key")[0];
 
   // yes, this import is already stored in the exporter (unless the cache is lying)
-  if (cacheKey === pluginKey) {
+  if (cacheKey === pluginKey && !args['--force']) {
     console.error(`axon-reader: results for ${topic} already up to date.`);
     return;
   }
