@@ -63,45 +63,54 @@ async function* readExecutable(
     stderr: "piped",
   });
 
-  const [code, rawOutput, rawError] = await Promise.all([
-    plugin.status(),
-    plugin.output(),
-    plugin.stderrOutput(),
-  ]);
-
-  const errorString = new TextDecoder().decode(rawError);
-  console.log(errorString);
+//  const code = await plugin.status()
+// todo non terminating rn
 
   console.error(`axon-readers: reading triples from plugin ${fpath}`);
 
-  if (code.code === 0) {
-    const content = new TextDecoder().decode(rawOutput);
+  let count = 0;
+  const enc = (str: string) => new TextEncoder().encode(str);
 
-    for (const line of content.split("\n")) {
-      if (line.trim().length > 0) {
-        try {
-          var lineObject = JSON.parse(line);
-        } catch (err) {
-          console.error(
-            `axon-readers: failed to parse following thing as JSON`,
-          );
-          console.error(line);
-          throw err;
-        }
+  const pid = setInterval(async () => {
+    await Deno.stdout.write(enc(`read triple #${count}\r`))
+  }, 100);
 
-        try {
-          const thing = new Models.Thing(lineObject);
-          yield thing;
-        } catch (err) {
-          console.error(`axon-readers: failed to validate following thing`);
-          console.error(line);
-          throw err;
-        }
+  for await (const line of readLines(plugin.stdout)) {
+    try {
+      var lineObject = JSON.parse(line);
+    } catch (err) {
+      console.error(
+        `axon-readers: failed to parse following thing as JSON`,
+      );
+      console.error(line);
+      throw err;
+    }
+
+    if (line.trim().length > 0) {
+      try {
+        const thing = new Models.Thing(lineObject);
+        yield thing;
+      } catch (err) {
+        clearInterval(pid)
+        console.error(`axon-readers: failed to validate following thing`);
+        console.error(line);
+        throw err;
       }
     }
-  } else {
-    const errorString = new TextDecoder().decode(rawError);
-    console.log(errorString);
+
+    count++;
+  }
+  console.log('')
+
+  const code = await plugin.status()
+  const rawErr = await plugin.stderrOutput();
+
+  clearInterval(pid)
+
+  if (code.code !== 0) {
+    const errorString = new TextDecoder().decode(rawErr);
+    console.error(errorString);
+    throw new Error(`axon-reader: plugin exited with status ${code.code}`)
   }
 }
 
