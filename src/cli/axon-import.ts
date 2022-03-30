@@ -55,6 +55,11 @@ export async function main(argv: string[]) {
     }
   }
 
+  if (typeof from === 'undefined') {
+    console.error(`axon-import: --from was not provided`);
+    Deno.exit(1);
+  }
+
   return Sqlite.writeTopic(
     Constants.AXON_DB,
     args["--topic"],

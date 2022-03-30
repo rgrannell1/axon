@@ -180,16 +180,21 @@ export async function writeTopic(
         );
         if (result[0][0] === 0) {
           // merge things not presently in this topic into the topic
-          await db.query(
-            `insert into ${topic} (hash, src, rel, tgt, insert_date) values (?, ?, ?, ?, ?)`,
-            [
-              hash,
-              triple.src,
-              triple.rel,
-              triple.tgt,
-              now,
-            ],
-          );
+          try {
+            await db.query(
+              `insert into ${topic} (hash, src, rel, tgt, insert_date) values (?, ?, ?, ?, ?)`,
+              [
+                hash,
+                triple.src,
+                triple.rel,
+                triple.tgt,
+                now,
+              ],
+            );
+          } catch (err) {
+            console.error(`failed to insert triple ${JSON.stringify(triple, null, 2)}`);
+            throw err
+          }
         }
       }
 
@@ -211,13 +216,24 @@ export async function writeTopic(
 
 export async function* ReadTriples(
   fpath: string,
-  search: string,
+  topics: string,
 ) {
   const db = await init(fpath);
 
+  const matches = matchingTopics(db, topics);
+
+  const searches = [];
+  for (const topic of matches) {
+    searches.push(`
+      select src,rel,tgt from ${topic}
+      `);
+  }
+
+  const search = searches.join("\nunion\n");
+
   try {
     for await (const row of db.query(search)) {
-      yield new Models.Triple(row[1], row[2], row[3]);
+      yield new Models.Triple(row[0], row[1], row[2]);
     }
   } finally {
     db.close();
