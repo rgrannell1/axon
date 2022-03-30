@@ -5,9 +5,9 @@ rm -rf dist || echo 'dist/ not present, creating...'
 mkdir dist
 
 # bundle to tmpfiles
-deno bundle src/cli/axon.ts        dist/axon-import.tmp
-deno bundle src/cli/axon-export.ts dist/axon-export.tmp
-deno bundle src/cli/axon.ts        dist/axon.tmp
+/home/rg/.deno/bin/deno bundle src/cli/axon.ts        dist/axon-import.tmp
+/home/rg/.deno/bin/deno bundle src/cli/axon-export.ts dist/axon-export.tmp
+/home/rg/.deno/bin/deno bundle src/cli/axon.ts        dist/axon.tmp
 
 # create shebangs
 echo '#!/bin/sh'                                                 | tee -a dist/shebang.tmp
