@@ -192,8 +192,10 @@ export async function writeTopic(
               ],
             );
           } catch (err) {
-            console.error(`failed to insert triple ${JSON.stringify(triple, null, 2)}`);
-            throw err
+            console.error(
+              `failed to insert triple ${JSON.stringify(triple, null, 2)}`,
+            );
+            throw err;
           }
         }
       }
@@ -224,16 +226,15 @@ export async function* ReadTriples(
 
   const searches = [];
   for (const topic of matches) {
-    searches.push(`
-      select src,rel,tgt from ${topic}
-      `);
+    searches.push(`select src, rel,tgt from ${topic}`);
   }
-
-  const search = searches.join("\nunion\n");
+  const search = db.prepareQuery<[string, string, string]>(
+    searches.join("\nunion\n"),
+  );
 
   try {
-    for await (const row of db.query(search)) {
-      yield new Models.Triple(row[0], row[1], row[2]);
+    for await (const [src, rel, tgt] of search.iter()) {
+      yield new Models.Triple(src, rel, tgt);
     }
   } finally {
     db.close();
@@ -266,26 +267,27 @@ export async function* ReadThings(
 ) {
   const db = await init(fpath);
 
-  try {
-    const searches = [];
+  const searches: string[] = [];
+  const matches = matchingTopics(db, topics);
 
-    const matches = matchingTopics(db, topics);
-
-    for (const topic of matches) {
-      searches.push(`
-      select src,rel,tgt from ${topic}
+  for (const topic of matches) {
+    searches.push(`
+      select src, rel, tgt from ${topic}
       union
-      select tgt as src,'id' as rel,tgt from ${topic}
+      select tgt as src, 'id' as rel, tgt from ${topic}
       `);
-    }
+  }
 
-    const search = searches.join("\nunion\n") + `group by src`;
+  let previous: string | undefined = undefined;
+  let triples = [];
 
-    let previous: string | undefined = undefined;
-    let triples = [];
+  const search = db.prepareQuery<[string, string, string]>(
+    searches.join("\nunion\n"),
+  );
 
-    for await (const row of db.query(search)) {
-      const triple = new Models.Triple(row[0], row[1], row[2]);
+  try {
+    for await (const [src, rel, tgt] of search.iter()) {
+      const triple = new Models.Triple(src, rel, tgt);
 
       triples.push(triple);
 

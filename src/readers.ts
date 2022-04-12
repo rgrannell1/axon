@@ -215,13 +215,12 @@ export async function* read(
   args: any,
   knowledge: Models.Knowledge,
 ): Models.ThingStream {
-  if (typeof fpath !== 'string') {
+  if (typeof fpath !== "string") {
     console.error(`read: invalid --from argument provided`);
     Deno.exit(1);
   }
 
   try {
-
     var stat = await Deno.stat(fpath);
   } catch (err) {
     if (err instanceof Deno.errors.NotFound) {
