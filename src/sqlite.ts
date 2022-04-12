@@ -237,6 +237,7 @@ export async function* ReadTriples(
       yield new Models.Triple(src, rel, tgt);
     }
   } finally {
+    search.finalize();
     db.close();
   }
 }
@@ -299,6 +300,7 @@ export async function* ReadThings(
       previous = triple.src;
     }
   } finally {
+    search.finalize();
     db.close();
   }
 }
