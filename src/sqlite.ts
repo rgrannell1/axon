@@ -222,36 +222,19 @@ export async function* ReadTriples(
 
   const matches = matchingTopics(db, topics);
 
-  const searches: string[] = [];
+  const searches = [];
   for (const topic of matches) {
-    searches.push(`select src,rel,tgt from ${topic}`);
+    searches.push(`
+      select src,rel,tgt from ${topic}
+      `);
   }
 
-  const subquery = (offset: number, limit: number) => {
-    return searches.join("\nunion\n") + ` limit ${limit} offset ${offset}`;
-  }
+  const search = searches.join("\nunion\n");
 
   try {
-    let offset = 0;
-    let size = 250;
-
-    while (true) {
-      let count = 0
-      const fragmentQuery = subquery(offset, size)
-
-      for await (const row of db.query(fragmentQuery)) {
-        yield new Models.Triple(row[0], row[1], row[2]);
-        count++
-      }
-
-      if (count === 0) {
-        break;
-      }
-
-      offset += size;
+    for await (const row of db.query(search)) {
+      yield new Models.Triple(row[0], row[1], row[2]);
     }
-  } catch (err) {
-    console.log(err)
   } finally {
     db.close();
   }
