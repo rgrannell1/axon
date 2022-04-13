@@ -2,3 +2,5 @@ dist
 bs/env.sh
 out.jsonl
 *.log
+*.nq
+*.csv

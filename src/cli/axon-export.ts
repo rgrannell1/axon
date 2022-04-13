@@ -71,6 +71,10 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
     console.error(`\raxon: exported triple #${idx}`);
   }, 200);
 
+  const escapeCsvCell = (content: string) => {
+    return content.replace(/\n/g, "\\n");
+  }
+
   for await (
     const triple of Sqlite.ReadTriples(Constants.AXON_DB, args["--topics"])
   ) {
@@ -102,9 +106,9 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
     }
 
     if (fileFormat === FileFormats.CSV) {
-      await writer.writeCell(triple.src);
-      await writer.writeCell(triple.rel);
-      await writer.writeCell(triple.tgt);
+      await writer.writeCell(escapeCsvCell(triple.src), { forceQuotes: true });
+      await writer.writeCell(escapeCsvCell(triple.rel), { forceQuotes: true });
+      await writer.writeCell(escapeCsvCell(triple.tgt), { forceQuotes: true });
       await writer.nextLine();
     }
 
