@@ -31,6 +31,7 @@ Options:
 
 import docopt from "https://deno.land/x/docopt@v1.0.1/dist/docopt.mjs";
 import { stringify as yamlStringify } from "https://deno.land/std@0.82.0/encoding/yaml.ts";
+import { CSVWriter } from "https://deno.land/x/csv/mod.ts";
 
 import { fileFormat } from "../utils.ts";
 import { Constants, Sqlite } from "../../mod.ts";
@@ -55,28 +56,34 @@ export async function main(argv: string[]) {
   }
 }
 
-
 async function printTriples(fileFormat: any, args: { [k: string]: any }) {
   if (fileFormat === FileFormats.JSON) {
     console.log("[");
   }
-  let first = true;
 
-  if (fileFormat === FileFormats.CSV) {
-    console.log(["src", "rel", "tgt"].join(","));
-  }
+  let first = true;
+  const writer = new CSVWriter(Deno.stdout);
+
+  let idx = 0;
+
+  const pid = setInterval(() => {
+    console.error('\u001Bc')
+    console.error(`\raxon: exported triple #${idx}`);
+  }, 200);
 
   for await (
     const triple of Sqlite.ReadTriples(Constants.AXON_DB, args["--topics"])
   ) {
+    idx++;
+
     if (fileFormat === FileFormats.NQ) {
       console.log(
         [
           `</${encodeURIComponent(triple.src)}>`,
           `</${encodeURIComponent(triple.rel)}>`,
           `</${encodeURIComponent(triple.tgt)}>`,
-          '.'
-        ].join(' ')
+          ".",
+        ].join(" "),
       );
     }
 
@@ -95,13 +102,16 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
     }
 
     if (fileFormat === FileFormats.CSV) {
-      console.log(
-        [`"${triple.src}"`, `"${triple.rel}"`, `"${triple.tgt}"`].join(","),
-      );
+      await writer.writeCell(triple.src);
+      await writer.writeCell(triple.rel);
+      await writer.writeCell(triple.tgt);
+      await writer.nextLine();
     }
 
     first = false;
   }
+
+  clearInterval(pid);
 
   if (fileFormat === FileFormats.JSON) {
     console.log("]");
