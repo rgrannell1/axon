@@ -14,6 +14,8 @@ export function fileFormat(args: { [k: string]: any }, fpath: string = "") {
     return Constants.FileFormats.JSONL;
   } else if (args["--csv"]) {
     return Constants.FileFormats.CSV;
+  } else if (args["--nq"]) {
+    return Constants.FileFormats.NQ;
   }
 
   if (fpath.toLowerCase().endsWith(".yaml" || ".yml")) {

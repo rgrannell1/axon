@@ -19,6 +19,7 @@ export enum FileFormats {
   JSON = "json",
   JSONL = "jsonl",
   CSV = "csv",
+  NQ = "nq"
 }
 
 export enum Tables {

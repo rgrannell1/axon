@@ -4,7 +4,7 @@
 export const AXON_CLI = `
 Usage:
   axon export --entities [--yaml|--json|--jsonl] (--topics <str>)
-  axon export --triples [--yaml|--json|--jsonl|--csv] (--topics <str>)
+  axon export --triples [--yaml|--json|--jsonl|--csv|--nq] (--topics <str>)
   axon (-h|--help)
 
 Description:
@@ -25,6 +25,7 @@ Options:
   --json            Write entities or triples as json
   --jsonl           Write entities or triples as jsonl
   --csv             Write triples as csv
+  --nq              Write triples as N-Quads
   --topics <src>    A SQL search for entities to return.
 `;
 
@@ -54,6 +55,7 @@ export async function main(argv: string[]) {
   }
 }
 
+
 async function printTriples(fileFormat: any, args: { [k: string]: any }) {
   if (fileFormat === FileFormats.JSON) {
     console.log("[");
@@ -67,6 +69,17 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
   for await (
     const triple of Sqlite.ReadTriples(Constants.AXON_DB, args["--topics"])
   ) {
+    if (fileFormat === FileFormats.NQ) {
+      console.log(
+        [
+          `</${encodeURIComponent(triple.src)}>`,
+          `</${encodeURIComponent(triple.rel)}>`,
+          `</${encodeURIComponent(triple.tgt)}>`,
+          '.'
+        ].join(' ')
+      );
+    }
+
     if (fileFormat === FileFormats.JSONL) {
       console.log(JSON.stringify(triple));
     }
