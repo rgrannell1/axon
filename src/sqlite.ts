@@ -132,7 +132,6 @@ export async function addTopic(fpath: string, topic: string): Promise<void> {
       src           text not null,
       rel           text not null,
       tgt           text not null,
-      insert_date   text not null,
 
       primary key(hash)
     )`);
@@ -182,13 +181,12 @@ export async function writeTopic(
           // merge things not presently in this topic into the topic
           try {
             await db.query(
-              `insert into ${topic} (hash, src, rel, tgt, insert_date) values (?, ?, ?, ?, ?)`,
+              `insert into ${topic} (hash, src, rel, tgt) values (?, ?, ?, ?)`,
               [
                 hash,
                 triple.src,
                 triple.rel,
                 triple.tgt,
-                now,
               ],
             );
           } catch (err) {
