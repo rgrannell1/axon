@@ -26,4 +26,11 @@ export enum Tables {
   CACHE = "axon_topic_cache",
   STATE = "axon_topic_state",
   TOPICS = "topics",
+  CONTENT = "content",
 }
+
+export enum Views {
+  TOPICS = "topics_view",
+}
+
+export const TRIPLE_BUFFER_SIZE = 200;

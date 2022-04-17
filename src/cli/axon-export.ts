@@ -67,13 +67,13 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
   let idx = 0;
 
   const pid = setInterval(() => {
-    console.error('\u001Bc')
+    console.error("\u001Bc");
     console.error(`\raxon: exported triple #${idx}`);
   }, 200);
 
   const escapeCsvCell = (content: string) => {
     return content.replace(/\n/g, "\\n");
-  }
+  };
 
   for await (
     const triple of Sqlite.ReadTriples(Constants.AXON_DB, args["--topics"])
