@@ -252,6 +252,7 @@ async function addTopicView(db: DB, topics: Set<string>) {
 
 export async function* ReadTriples(
   fpath: string,
+  knowlege: Models.Knowledge,
   topics: string,
 ) {
   const db = await init(fpath);
@@ -273,7 +274,12 @@ export async function* ReadTriples(
 
   try {
     for await (const [src, rel, tgt] of search.iter()) {
-      yield new Models.Triple(src, rel, tgt);
+      const triple = new Models.Triple(src, rel, tgt);
+
+      yield triple;
+      for await (const derived of knowlege.addTriple(triple)) {
+        yield derived
+      }
     }
   } finally {
     search.finalize();

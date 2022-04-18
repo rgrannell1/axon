@@ -277,6 +277,72 @@ export class Knowledge {
       }
     }
   }
+
+  parents: Record<string, Set<string>> = {};
+  commutativeRelationships = new Set<string>();
+  invertibleRelationships: Record<string, Set<string[]>> = {};
+
+  async *addTriple(triple: Triple) {
+    const {src, rel, tgt} = triple
+
+    // order sensitive; load ontology first!
+
+    // add role knowledge
+    if (rel === 'is') {
+      if (!this.parents[src]) {
+        this.parents[src] = new Set();
+      }
+      this.parents[src].add(tgt)
+
+    } else if (rel === 'includes') {
+      if (!this.parents[tgt]) {
+        this.parents[tgt] = new Set();
+      }
+      this.parents[tgt].add(src)
+    }
+
+    // add commutative relationships
+    if (rel === 'is' && tgt === 'Axon_Commutative_Relationship') {
+      this.commutativeRelationships.add(src);
+      return
+    }
+    if (rel === 'includes' && src === 'Axon_Commutative_Relationship') {
+      this.commutativeRelationships.add(tgt);
+      return
+    }
+    // add invertible relationships
+    if (rel === 'is' && tgt === 'Axon_Invertible_Relationship') {
+      if (!this.invertibleRelationships[src]) {
+        this.invertibleRelationships[src] = new Set<string[]>();
+      }
+      return
+    }
+    if (rel === 'includes' && src === 'Axon_Invertible_Relationship') {
+      if (!this.invertibleRelationships[tgt]) {
+        this.invertibleRelationships[tgt] = new Set<string[]>();
+      }
+      return
+    }
+
+    if (rel === 'inverse') {
+      if (!this.invertibleRelationships[src]) {
+        this.invertibleRelationships[src] = new Set<string[]>();
+      }
+
+      this.invertibleRelationships[src].add(tgt)
+      return
+    }
+
+    if (this.commutativeRelationships.has(rel)) {
+      yield new Triple(tgt, rel, src);
+    }
+
+    if (this.invertibleRelationships[rel]) {
+      for (const inverse of this.invertibleRelationships[rel]) {
+        yield new Triple(tgt, inverse, src)
+      }
+    }
+  }
 }
 
 /*

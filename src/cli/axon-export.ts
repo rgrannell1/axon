@@ -34,7 +34,7 @@ import { stringify as yamlStringify } from "https://deno.land/std@0.82.0/encodin
 import { CSVWriter } from "https://deno.land/x/csv/mod.ts";
 
 import { fileFormat } from "../utils.ts";
-import { Constants, Sqlite } from "../../mod.ts";
+import { Constants, Readers, Models, Sqlite } from "../../mod.ts";
 
 const { FileFormats } = Constants;
 
@@ -49,14 +49,25 @@ export async function main(argv: string[]) {
 
   let fmt = fileFormat(args);
 
+  const knowledge = new Models.Knowledge();
+
+  for (const fpath of ['/home/rg/Drive/Obsidian/axon-ontology.yaml']) {
+    for await (const thing of Readers.read(fpath, {'--yaml': true}, knowledge)) {
+
+      for (const triple of thing.triples()) {
+        for await (const _ of knowledge.addTriple(triple)) {};
+      }
+    }
+  }
+
   if (args["--triples"]) {
-    await printTriples(fmt, args);
+    await printTriples(fmt, knowledge, args);
   } else {
-    await printEntities(fmt, args);
+    await printEntities(fmt, knowledge, args);
   }
 }
 
-async function printTriples(fileFormat: any, args: { [k: string]: any }) {
+async function printTriples(fileFormat: any, knowledge: Models.Knowledge, args: { [k: string]: any }) {
   if (fileFormat === FileFormats.JSON) {
     console.log("[");
   }
@@ -76,16 +87,16 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
   };
 
   for await (
-    const triple of Sqlite.ReadTriples(Constants.AXON_DB, args["--topics"])
+    const triple of Sqlite.ReadTriples(Constants.AXON_DB, knowledge, args["--topics"])
   ) {
     idx++;
 
     if (fileFormat === FileFormats.NQ) {
       console.log(
         [
-          `</${encodeURIComponent(triple.src)}>`,
-          `</${encodeURIComponent(triple.rel)}>`,
-          `</${encodeURIComponent(triple.tgt)}>`,
+          JSON.stringify(triple.src),
+          JSON.stringify(triple.rel),
+          JSON.stringify(triple.tgt),
           ".",
         ].join(" "),
       );
@@ -125,7 +136,7 @@ async function printTriples(fileFormat: any, args: { [k: string]: any }) {
 /*
  * Print entities
  */
-async function printEntities(fileFormat: any, args: { [k: string]: any }) {
+async function printEntities(fileFormat: any, knowledge: Models.Knowledge, args: { [k: string]: any }) {
   if (fileFormat === FileFormats.JSON) {
     console.log("[");
   }
