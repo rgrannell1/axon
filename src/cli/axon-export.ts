@@ -149,7 +149,7 @@ async function printEntities(fileFormat: any, knowledge: Models.Knowledge, args:
   }
 
   for await (
-    const thing of Sqlite.ReadThings(Constants.AXON_DB, args["--topics"])
+    const thing of Sqlite.ReadThings(Constants.AXON_DB, knowledge, args["--topics"])
   ) {
     if (fileFormat === FileFormats.JSONL) {
       console.log(JSON.stringify(thing.data));

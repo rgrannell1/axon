@@ -270,6 +270,7 @@ export async function* ReadTriples(
   join content content0 on content0.mid = ${view}.src_id
   join content content1 on content1.mid = ${view}.rel_id
   join content content2 on content2.mid = ${view}.tgt_id
+  order by src
   `);
 
   try {
@@ -315,42 +316,20 @@ export function matchingTopics(db: DB, topics: string) {
 
 export async function* ReadThings(
   fpath: string,
+  knowledge: Models.Knowledge,
   topics: string,
 ) {
-  const db = await init(fpath);
-
-  const searches: string[] = [];
-
-  for (const topic of matchingTopics(db, topics)) {
-    searches.push(`
-      select src, rel, tgt from ${topic}
-      union
-      select tgt as src, 'id' as rel, tgt from ${topic}
-      `);
-  }
-
-  let previous: string | undefined = undefined;
+  let lastSrc: string | undefined = undefined;
   let triples = [];
 
-  const search = db.prepareQuery<[string, string, string]>(
-    searches.join("\nunion\n"),
-  );
+  for await (const triple of ReadTriples(fpath, knowledge, topics)) {
+    triples.push(triple);
 
-  try {
-    for await (const [src, rel, tgt] of search.iter()) {
-      const triple = new Models.Triple(src, rel, tgt);
-
-      triples.push(triple);
-
-      if (triple.src !== previous) {
-        yield Models.Thing.fromTriples(triples);
-        triples = [];
-      }
-
-      previous = triple.src;
+    if (triple.src !== lastSrc) {
+      yield Models.Thing.fromTriples(triples);
+      triples = [];
     }
-  } finally {
-    search.finalize();
-    db.close();
+
+    lastSrc = triple.src;
   }
 }
