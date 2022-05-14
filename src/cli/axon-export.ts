@@ -3,7 +3,7 @@
 
 export const AXON_CLI = `
 Usage:
-  axon export --entities [--yaml|--json|--jsonl] (--topics <str>)
+  axon export --entities [--yaml|--json|--jsonl|--jsonld] (--topics <str>)
   axon export --triples [--yaml|--json|--jsonl|--csv|--nq] (--topics <str>)
   axon (-h|--help)
 
@@ -24,6 +24,7 @@ Options:
   --yaml            Write entities or triples as yaml
   --json            Write entities or triples as json
   --jsonl           Write entities or triples as jsonl
+  --jsonld          Write entities or triples as jsonld
   --csv             Write triples as csv
   --nq              Write triples as N-Quads
   --topics <src>    A SQL search for entities to return.
@@ -87,7 +88,7 @@ async function printTriples(fileFormat: any, knowledge: Models.Knowledge, args: 
   };
 
   for await (
-    const triple of Sqlite.ReadTriples(Constants.AXON_DB, knowledge, args["--topics"])
+    const triple of Sqlite.ReadTriples(Constants.AXON_DB, knowledge)
   ) {
     idx++;
 
@@ -133,6 +134,24 @@ async function printTriples(fileFormat: any, knowledge: Models.Knowledge, args: 
   }
 }
 
+const asJSONLD = (thing: any) => {
+  const facts: Record<string, any> = {
+    '@id': thing.id
+  }
+
+  for (const [rel, tgts] of Object.entries(thing)) {
+    if (Array.isArray(tgts)) {
+      facts[`${rel}`] = (tgts as string[]).map(tgt => {
+        return {'@id': tgt}
+      })
+    } else if (typeof(tgts) === 'string') {
+      facts[`${rel}`] = {'@id': tgts}
+    }
+  }
+
+  return JSON.stringify(facts)
+}
+
 /*
  * Print entities
  */
@@ -140,6 +159,11 @@ async function printEntities(fileFormat: any, knowledge: Models.Knowledge, args:
   if (fileFormat === FileFormats.JSON) {
     console.log("[");
   }
+  if (fileFormat == FileFormats.JSONLD) {
+    console.log(`{"@context": {}, "@graph": [`)
+
+  }
+
   let first = true;
 
   if (fileFormat === FileFormats.CSV) {
@@ -149,7 +173,7 @@ async function printEntities(fileFormat: any, knowledge: Models.Knowledge, args:
   }
 
   for await (
-    const thing of Sqlite.ReadThings(Constants.AXON_DB, knowledge, args["--topics"])
+    const thing of Sqlite.ReadThings(Constants.AXON_DB, knowledge)
   ) {
     if (fileFormat === FileFormats.JSONL) {
       console.log(JSON.stringify(thing.data));
@@ -165,10 +189,20 @@ async function printEntities(fileFormat: any, knowledge: Models.Knowledge, args:
       console.log(yamlStringify([thing.data] as any));
     }
 
+    if (fileFormat === FileFormats.JSONLD) {
+      first
+      ? console.log(asJSONLD(thing.data as any))
+      : console.log(',' + asJSONLD(thing.data as any))
+    }
+
     first = false;
   }
 
   if (fileFormat === FileFormats.JSON) {
     console.log("]");
+  }
+
+  if (fileFormat === FileFormats.JSONLD) {
+    console.log("]}");
   }
 }

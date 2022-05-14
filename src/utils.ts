@@ -6,33 +6,36 @@ export const id = (...args: string[]) => {
 };
 
 export function fileFormat(args: { [k: string]: any }, fpath: string = "") {
+  const ff = Constants.FileFormats;
   if (args["--yaml"]) {
-    return Constants.FileFormats.YAML;
+    return ff.YAML;
   } else if (args["--json"]) {
-    return Constants.FileFormats.JSON;
+    return ff.JSON;
   } else if (args["--jsonl"]) {
-    return Constants.FileFormats.JSONL;
+    return ff.JSONL;
   } else if (args["--csv"]) {
-    return Constants.FileFormats.CSV;
+    return ff.CSV;
   } else if (args["--nq"]) {
-    return Constants.FileFormats.NQ;
+    return ff.NQ;
+  } else if (args["--jsonld"]) {
+    return ff.JSONLD;
   }
 
   if (fpath.toLowerCase().endsWith(".yaml" || ".yml")) {
-    return Constants.FileFormats.YAML;
+    return ff.YAML;
   }
 
   if (fpath.toLowerCase().endsWith(".json")) {
-    return Constants.FileFormats.JSON;
+    return ff.JSON;
   }
 
   if (fpath.toLowerCase().endsWith(".jsonl")) {
-    return Constants.FileFormats.JSONL;
+    return ff.JSONL;
   }
 
   if (fpath.toLowerCase().endsWith(".csv")) {
-    return Constants.FileFormats.CSV;
+    return ff.CSV;
   }
 
-  return Constants.FileFormats.JSONL;
+  return ff.JSONL;
 }

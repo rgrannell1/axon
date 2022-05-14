@@ -33,8 +33,22 @@ async function init(fpath: string): Promise<DB> {
       content    text not null unique,
       mid        integer primary key
     )`,
+    `
+    create table if not exists ${Constants.Tables.RELATIONS} (
+      src_id    integer not null,
+      rel_id    integer not null,
+      tgt_id    integer not null,
+
+      foreign key(src_id) references ${Constants.Tables.CONTENT} (mid),
+      foreign key(rel_id) references ${Constants.Tables.CONTENT} (mid),
+      foreign key(tgt_id) references ${Constants.Tables.CONTENT} (mid)
+    )`,
     `create unique index if not exists mid_index on ${Constants.Tables.CONTENT} (mid)`,
     `create unique index if not exists content_index on ${Constants.Tables.CONTENT} (content)`,
+
+    `create index if not exists src_id_index on ${Constants.Tables.RELATIONS} (src_id)`,
+    `create index if not exists rel_id_index on ${Constants.Tables.RELATIONS} (rel_id)`,
+    `create index if not exists tgt_id_index on ${Constants.Tables.RELATIONS} (tgt_id)`,
   ];
 
   for (const table of tables) {
@@ -130,35 +144,15 @@ export async function readState(
   }
 }
 
-export async function addTopic(fpath: string, topic: string): Promise<void> {
-  const db = await init(fpath);
-
-  try {
-    await db.query(`create table if not exists ${topic} (
-      src_id    number not null,
-      rel_id    number not null,
-      tgt_id    number not null,
-
-      primary key(src_id, rel_id, tgt_id),
-      foreign key(src_id) references content(mid),
-      foreign key(rel_id) references content(mid),
-      foreign key(tgt_id) references content(mid)
-    )`);
-  } finally {
-    db.close();
-  }
-}
-
 async function insertTriple(
   db: DB,
-  topic: string,
   tripleBuffer: Models.Triple[],
 ) {
-  const insertQuery = db.prepareQuery(
+  const insertContents = db.prepareQuery(
     `insert or ignore into ${Constants.Tables.CONTENT} (content) values (:src), (:rel), (:tgt)`,
   );
-  const insertTopicQuery = db.prepareQuery(`
-  insert or ignore into ${topic} (src_id, rel_id, tgt_id)
+  const insertRelations = db.prepareQuery(`
+  insert or ignore into ${Constants.Tables.RELATIONS} (src_id, rel_id, tgt_id)
   values (
     (select mid from ${Constants.Tables.CONTENT} where content = :src),
     (select mid from ${Constants.Tables.CONTENT} where content = :rel),
@@ -167,13 +161,13 @@ async function insertTriple(
 
   db.transaction(() => {
     for (const triple of tripleBuffer) {
-      insertQuery.execute({
+      insertContents.execute({
         src: triple.src,
         rel: triple.rel,
         tgt: triple.tgt,
       });
 
-      insertTopicQuery.execute({
+      insertRelations.execute({
         src: triple.src,
         rel: triple.rel,
         tgt: triple.tgt,
@@ -181,7 +175,7 @@ async function insertTriple(
     }
   });
 
-  insertQuery.finalize();
+  insertContents.finalize();
 }
 
 /**
@@ -198,7 +192,6 @@ export async function writeTopic(
   things: Models.ThingStream,
 ) {
   const db = await init(fpath);
-  await addTopic(fpath, topic);
 
   let cacheKey, state;
   let tripleBuffer: Models.Triple[] = [];
@@ -219,7 +212,7 @@ export async function writeTopic(
         tripleBuffer.push(triple);
 
         if (tripleBuffer.length > Constants.TRIPLE_BUFFER_SIZE) {
-          await insertTriple(db, topic, tripleBuffer);
+          await insertTriple(db, tripleBuffer);
           tripleBuffer = [];
         }
       }
@@ -235,41 +228,28 @@ export async function writeTopic(
     }
 
     // final write
-    await insertTriple(db, topic, tripleBuffer);
+    await insertTriple(db, tripleBuffer);
   } finally {
     db.close(true);
   }
 }
 
-async function addTopicView(db: DB, topics: Set<string>) {
-  const parts = Array.from(topics).map(topic => `select src_id, rel_id, tgt_id from ${topic}`).join('\nunion\n')
-
-  db.execute(
-    `create temp view if not exists ${Constants.Views.TOPICS}(src_id, rel_id, tgt_id) as
-     ${parts}`,
-  );
-}
-
 export async function* ReadTriples(
   fpath: string,
-  knowlege: Models.Knowledge,
-  topics: string,
+  knowlege: Models.Knowledge
 ) {
   const db = await init(fpath);
-  const matches = matchingTopics(db, topics);
 
-  await addTopicView(db, matches);
-
-  const view = Constants.Views.TOPICS;
+  const triples = Constants.Tables.RELATIONS;
   const search = db.prepareQuery<[string, string, string]>(`
   select
     content0.content as src,
     content1.content as rel,
     content2.content as tgt
-  from ${view}
-  join content content0 on content0.mid = ${view}.src_id
-  join content content1 on content1.mid = ${view}.rel_id
-  join content content2 on content2.mid = ${view}.tgt_id
+  from ${triples}
+  join content content0 on content0.mid = ${triples}.src_id
+  join content content1 on content1.mid = ${triples}.rel_id
+  join content content2 on content2.mid = ${triples}.tgt_id
   order by src
   `);
 
@@ -277,7 +257,7 @@ export async function* ReadTriples(
     for await (const [src, rel, tgt] of search.iter()) {
       const triple = new Models.Triple(src, rel, tgt);
 
-      yield triple;
+      yield triple
       for await (const derived of knowlege.addTriple(triple)) {
         yield derived
       }
@@ -288,41 +268,14 @@ export async function* ReadTriples(
   }
 }
 
-export function matchingTopics(db: DB, topics: string) {
-  const tables = db.query(`select name from sqlite_schema where
-    type ='table' AND
-    name NOT LIKE 'sqlite_%';`);
-
-  const tableRe = new RegExp(topics, "i");
-  const ignored = new Set<string>([
-    Constants.Tables.CACHE,
-    Constants.Tables.STATE,
-    Constants.Tables.TOPICS,
-    Constants.Tables.CACHE,
-    Constants.Tables.CONTENT,
-  ]);
-
-  const tableSet = new Set<string>();
-  for (const [table] of tables) {
-    const tab = table as string;
-
-    if (!ignored.has(tab) && tableRe.test(tab)) {
-      tableSet.add(tab);
-    }
-  }
-
-  return tableSet;
-}
-
 export async function* ReadThings(
   fpath: string,
-  knowledge: Models.Knowledge,
-  topics: string,
+  knowledge: Models.Knowledge
 ) {
   let lastSrc: string | undefined = undefined;
   let triples = [];
 
-  for await (const triple of ReadTriples(fpath, knowledge, topics)) {
+  for await (const triple of ReadTriples(fpath, knowledge)) {
     triples.push(triple);
 
     if (triple.src !== lastSrc) {
